@@ -15,6 +15,10 @@ dirT <- "G:/My Drive/research/projects/Data/campus_weather/TOMST/tomst_all"
 currentD2 <- "04-16-2024"
 dirT2 <- "G:/My Drive/research/projects/Data/campus_weather/TOMST/04_16_24"
 
+# data downloaded in April 
+currentD3 <- "06-26-2024"
+dirT3 <- "G:/My Drive/research/projects/Data/campus_weather/TOMST/06_26_24"
+
 tomstF <- list.files(paste0(dirT))
 fileSN <- character()
 for(i in 1:length(tomstF)){
@@ -137,17 +141,82 @@ for(i in 1:length(fileSNn2)){
 }  
 
 
+
+# read in new data from D3
+
+tomstF3 <- list.files(paste0(dirT3))
+fileSN3 <- character()
+sensors3ID <- character()
+for(i in 1:length(tomstF3)){
+  fileSN3[i] <- as.numeric(strsplit(tomstF3, "_")[[i]][2])
+}
+fileSNn3 <- as.numeric(fileSN3)
+
+sensDF3 <- data.frame(sensor_sid = fileSNn3)
+
+sensors3 <- sensors %>% filter(end_date == "current")
+
+
+sensors3$start_dateF <- mdy("04-16-2024")
+
+sensors3$end_dateF <- mdy("06-26-2024")
+
+sensors3 <- inner_join(sensors3, sensDF3, by="sensor_sid")
+
+# read in files
+datT3 <- list()
+
+for(i in 1: length(fileSN3)){
+  datT3[[i]] <- read.csv(paste0(dirT3,"/",tomstF3[i]), sep=";",
+                         header=FALSE)[,1:9]
+  colnames(datT3[[i]])[1:9] <- c("record","date","tz","Tm6","T2","T15","SM","shake","errFlag")
+  datT3[[i]]$SN <- rep(fileSN3[i], nrow(datT3[[i]]))
+  
+  datT3[[i]]$dateF <- ymd_hm(datT3[[i]]$date) 
+  datT3[[i]]$estD <- with_tz(datT3[[i]]$dateF, tzone="America/New_York")
+}
+
+
+sensorInfoL3 <- list()
+
+for(i in 1:length(fileSNn3)){
+  sensorInfoL3[[i]] <- sensors3 %>%
+    filter(sensors3$sensor_sid == fileSNn3[i])
+  
+}
+
+tail(datT3[[1]])
+
+
+for(i in 1:length(fileSNn3)){
+  datT3[[i]]$location <- rep("omit",nrow(datT3[[i]]))
+  datT3[[i]]$Plot <- rep("omit",nrow(datT3[[i]]))
+  for(j in 1:nrow(sensorInfoL3[[i]])){
+    
+    datT3[[i]]$location <- ifelse(datT3[[i]]$estD > sensorInfoL3[[i]]$start_dateF[j] & 
+                                    datT3[[i]]$estD < sensorInfoL3[[i]]$end_dateF[j],
+                                  sensorInfoL3[[i]]$location[j],datT3[[i]]$location)
+    
+    datT3[[i]]$Plot <- ifelse(datT3[[i]]$estD > sensorInfoL3[[i]]$start_dateF[j] & 
+                                datT3[[i]]$estD < sensorInfoL3[[i]]$end_dateF[j],
+                              sensorInfoL3[[i]]$Plot.name[j],datT3[[i]]$Plot)
+  }
+}  
+
 tomstUL <- do.call("rbind",datT)
 
 tomstUL2 <- do.call("rbind",datT2)
+tomstUL3 <- do.call("rbind",datT3)
 
 tomstp1 <- tomstUL %>%
   filter(location != "omit")
 
 tomstp2 <- tomstUL2 %>%
   filter(location != "omit")
-
-tomst <- rbind(tomstp1,tomstp2)
+tomstp3 <- tomstUL3 %>%
+  filter(location != "omit")
+tomst1 <- rbind(tomstp1,tomstp2)
+tomst <- rbind(tomst1,tomstp3)
 
 tomst$Tm6 <- as.numeric(gsub("\\,","\\.", tomst$Tm6))
 tomst$T2 <- as.numeric(gsub("\\,","\\.", tomst$T2))
@@ -192,9 +261,35 @@ ggplot(tomstHour, aes(DD, Tsoil6, color=location))+
 ggplot(tomstLocation, aes(DD, Tsoil6, color=location))+
   geom_line()
 
+tomst24 <- tomstLocation %>%
+  filter(location == "hemlock sapflow" |
+           location == "maple-beech" |
+           location == "Rogers reforestation" |
+           location == "Spruce RG09" |
+           location == "Buckthorn RG03" ) %>%
+  filter(year == 2024)
+tomst24$Date <- as.Date(tomst24$doy-1, origin="2024-01-01")
+tomst24$dateAll <- paste0(tomst24$Date, " ", tomst24$hour,":00") 
+tomst24$Timestamp <- ymd_hm(tomst24$dateAll)
+tomst24$month <- month(tomst24$Timestamp)
+                          
+ggplot(tomst24, aes(Timestamp, Tsoil6, color=location))+
+  geom_line()
+
+ggplot(tomst24, aes(Timestamp, SWC, color=location))+
+  geom_line()
+
+write.csv(tomst24,"K:/Environmental_Studies/hkropp/projects/canopy_LAI/soil/soil_06_24.csv", row.names=FALSE)
+
+ggplot(tomst24 %>% filter(month == 6), aes(Timestamp, Tsoil6, color=location))+
+  geom_line()
+
+ggplot(tomst24 %>% filter(year == 2024), aes(DD, Tsoil6, color=location))+
+  geom_line(linewidth=1.5, alpha=0.5)
+
 ggplot(tomstLocation %>% filter(location == "weather station"),
        aes(DD, Tsoil6, color=location))+
-  geom_line()
+  geom_line(size=1.5)
 
 ggplot(tomstLocation %>% filter(location == "Buckthorn RG03"),
        aes(DD, Tsoil6, color=location))+
