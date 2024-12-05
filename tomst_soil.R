@@ -19,6 +19,10 @@ dirT2 <- "G:/My Drive/research/projects/Data/campus_weather/TOMST/04_16_24"
 currentD3 <- "06-26-2024"
 dirT3 <- "G:/My Drive/research/projects/Data/campus_weather/TOMST/06_26_24"
 
+# data downloaded in April 
+currentD4 <- "10-18-2024"
+dirT4 <- "G:/My Drive/research/projects/Data/campus_weather/TOMST/10_18_24"
+
 tomstF <- list.files(paste0(dirT))
 fileSN <- character()
 for(i in 1:length(tomstF)){
@@ -159,7 +163,7 @@ sensors3 <- sensors %>% filter(end_date == "current")
 
 sensors3$start_dateF <- mdy("04-16-2024")
 
-sensors3$end_dateF <- mdy("06-26-2024")
+sensors3$end_dateF <- mdy("06-25-2024")
 
 sensors3 <- inner_join(sensors3, sensDF3, by="sensor_sid")
 
@@ -203,10 +207,74 @@ for(i in 1:length(fileSNn3)){
   }
 }  
 
+
+
+# read in new data from D4
+
+tomstF4 <- list.files(paste0(dirT4))
+fileSN4 <- character()
+sensors4ID <- character()
+for(i in 1:length(tomstF4)){
+  fileSN4[i] <- as.numeric(strsplit(tomstF4, "_")[[i]][2])
+}
+fileSNn4 <- as.numeric(fileSN4)
+
+sensDF4 <- data.frame(sensor_sid = fileSNn4)
+
+sensors4 <- sensors %>% filter(end_date == "current")
+
+
+sensors4$start_dateF <- mdy("06-26-2024")
+
+sensors4$end_dateF <- mdy("10-17-2024")
+
+sensors4 <- inner_join(sensors4, sensDF4, by="sensor_sid")
+
+# read in files
+datT4 <- list()
+
+for(i in 1: length(fileSN4)){
+  datT4[[i]] <- read.csv(paste0(dirT4,"/",tomstF4[i]), sep=";",
+                         header=FALSE)[,1:9]
+  colnames(datT4[[i]])[1:9] <- c("record","date","tz","Tm6","T2","T15","SM","shake","errFlag")
+  datT4[[i]]$SN <- rep(fileSN4[i], nrow(datT4[[i]]))
+  
+  datT4[[i]]$dateF <- ymd_hm(datT4[[i]]$date) 
+  datT4[[i]]$estD <- with_tz(datT4[[i]]$dateF, tzone="America/New_York")
+}
+
+
+sensorInfoL4 <- list()
+
+for(i in 1:length(fileSNn4)){
+  sensorInfoL4[[i]] <- sensors4 %>%
+    filter(sensors4$sensor_sid == fileSNn4[i])
+  
+}
+
+tail(datT4[[1]])
+
+
+for(i in 1:length(fileSNn4)){
+  datT4[[i]]$location <- rep("omit",nrow(datT4[[i]]))
+  datT4[[i]]$Plot <- rep("omit",nrow(datT4[[i]]))
+  for(j in 1:nrow(sensorInfoL4[[i]])){
+    
+    datT4[[i]]$location <- ifelse(datT4[[i]]$estD > sensorInfoL4[[i]]$start_dateF[j] & 
+                                    datT4[[i]]$estD < sensorInfoL4[[i]]$end_dateF[j],
+                                  sensorInfoL4[[i]]$location[j],datT4[[i]]$location)
+    
+    datT4[[i]]$Plot <- ifelse(datT4[[i]]$estD > sensorInfoL4[[i]]$start_dateF[j] & 
+                                datT4[[i]]$estD < sensorInfoL4[[i]]$end_dateF[j],
+                              sensorInfoL4[[i]]$Plot.name[j],datT4[[i]]$Plot)
+  }
+}  
+
 tomstUL <- do.call("rbind",datT)
 
 tomstUL2 <- do.call("rbind",datT2)
 tomstUL3 <- do.call("rbind",datT3)
+tomstUL4 <- do.call("rbind",datT4)
 
 tomstp1 <- tomstUL %>%
   filter(location != "omit")
@@ -215,8 +283,11 @@ tomstp2 <- tomstUL2 %>%
   filter(location != "omit")
 tomstp3 <- tomstUL3 %>%
   filter(location != "omit")
+tomstp4 <- tomstUL4 %>%
+  filter(location != "omit")
 tomst1 <- rbind(tomstp1,tomstp2)
-tomst <- rbind(tomst1,tomstp3)
+tomst2 <- rbind(tomst1,tomstp3)
+tomst <- rbind(tomst2,tomstp4)
 
 tomst$Tm6 <- as.numeric(gsub("\\,","\\.", tomst$Tm6))
 tomst$T2 <- as.numeric(gsub("\\,","\\.", tomst$T2))
@@ -279,7 +350,7 @@ ggplot(tomst24, aes(Timestamp, Tsoil6, color=location))+
 ggplot(tomst24, aes(Timestamp, SWC, color=location))+
   geom_line()
 
-write.csv(tomst24,"K:/Environmental_Studies/hkropp/projects/canopy_LAI/soil/soil_06_24.csv", row.names=FALSE)
+write.csv(tomst24,"K:/Environmental_Studies/hkropp/projects/canopy_LAI/soil/soil_10_18.csv", row.names=FALSE)
 
 ggplot(tomst24 %>% filter(month == 6), aes(Timestamp, Tsoil6, color=location))+
   geom_line()
