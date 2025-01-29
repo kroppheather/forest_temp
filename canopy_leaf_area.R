@@ -17,7 +17,7 @@ canopyPlot <- canopyLAI %>%
             n_canopy = n())
 
 # caclulate total tree area
-forestInventory$tree_area.cm2 <- (((forestInventory$DBH.cm / 2)^2) * pi/10000) 
+forestInventory$tree_area.cm2 <- (((forestInventory$DBH.cm / 2)^2) * pi) 
 
 # add up tree area by species
 FI <- forestInventory %>%
