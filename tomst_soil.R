@@ -292,6 +292,7 @@ tomst <- rbind(tomst2,tomstp4)
 tomst$Tm6 <- as.numeric(gsub("\\,","\\.", tomst$Tm6))
 tomst$T2 <- as.numeric(gsub("\\,","\\.", tomst$T2))
 tomst$T15 <- as.numeric(gsub("\\,","\\.", tomst$T15))
+# silty loam moisture calibration
 tomst$SMcor <- (-0.00000002*(tomst$SM^2)) + (0.0003*tomst$SM) -0.2062
 
 # extra filter SM less than zero will be a sensor pulled out
