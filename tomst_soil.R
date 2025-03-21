@@ -5,23 +5,30 @@ library(dplyr)
 library(ggplot2)
 library(lubridate)
 
-
+dirComp <- c("G:/My Drive/research/projects",
+             "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects")
+compID <- 2
 ##### directories and data files ----
+
+sensors <- read.csv(paste0(dirComp[compID],"/Data/campus_weather/TOMST/sensor inventory.csv"))
+
+soil_t <- read.csv(paste0(dirComp[compID],"/forest_soil/texture/soil_text.csv"))
+
 # enter current date here
 currentD <- "09-20-2023"
 
-dirT <- "G:/My Drive/research/projects/Data/campus_weather/TOMST/tomst_all"
+dirT <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/tomst_all")
 # data downloaded in April 
 currentD2 <- "04-16-2024"
-dirT2 <- "G:/My Drive/research/projects/Data/campus_weather/TOMST/04_16_24"
+dirT2 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/04_16_24")
 
 # data downloaded in April 
 currentD3 <- "06-26-2024"
-dirT3 <- "G:/My Drive/research/projects/Data/campus_weather/TOMST/06_26_24"
+dirT3 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/06_26_24")
 
 # data downloaded in April 
 currentD4 <- "10-18-2024"
-dirT4 <- "G:/My Drive/research/projects/Data/campus_weather/TOMST/10_18_24"
+dirT4 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/10_18_24")
 
 tomstF <- list.files(paste0(dirT))
 fileSN <- character()
@@ -30,8 +37,16 @@ for(i in 1:length(tomstF)){
 }
 fileSNn <- as.numeric(fileSN)
 
-sensors <- read.csv("G:/My Drive/research/projects/Data/campus_weather/TOMST/sensor inventory.csv")
+##### soil texture data ----
+text_plot <- soil_t %>%
+  group_by(Plot,location) %>%
+  summarise(perc_org=mean(prec_organic),
+    sand = mean(sand),
+            silt=mean(silt))
+  
+text_plot$clay <- 100-text_plot$sand-text_plot$silt
 
+#write.csv(text_plot, paste0(dirComp[compID],"/forest_soil/texture/plot_texture.csv"))
 ##### read in data files and format for R ----
 
 # read in files
@@ -292,8 +307,8 @@ tomst <- rbind(tomst2,tomstp4)
 tomst$Tm6 <- as.numeric(gsub("\\,","\\.", tomst$Tm6))
 tomst$T2 <- as.numeric(gsub("\\,","\\.", tomst$T2))
 tomst$T15 <- as.numeric(gsub("\\,","\\.", tomst$T15))
-# silty loam moisture calibration
-tomst$SMcor <- (-0.00000002*(tomst$SM^2)) + (0.0003*tomst$SM) -0.2062
+# silty loam moisture calibration all sites are silt loam
+tomst$SMcor <- (-0.000000017*(tomst$SM^2)) + (0.00011*tomst$SM) -0.1011
 
 # extra filter SM less than zero will be a sensor pulled out
 
