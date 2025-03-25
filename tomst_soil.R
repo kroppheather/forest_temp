@@ -26,9 +26,15 @@ dirT2 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/04_16_24")
 currentD3 <- "06-26-2024"
 dirT3 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/06_26_24")
 
-# data downloaded in April 
+# data downloaded in Oct
 currentD4 <- "10-18-2024"
 dirT4 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/10_18_24")
+
+# data downloaded in March
+currentD5 <- "03-20-2025"
+dirT5 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/03_20_25")
+
+
 
 tomstF <- list.files(paste0(dirT))
 fileSN <- character()
@@ -285,11 +291,77 @@ for(i in 1:length(fileSNn4)){
   }
 }  
 
+# read in new data from D5
+
+tomstF5 <- list.files(paste0(dirT5))
+fileSN5 <- character()
+sensors5ID <- character()
+for(i in 1:length(tomstF5)){
+  fileSN5[i] <- as.numeric(strsplit(tomstF5, "_")[[i]][2])
+}
+fileSNn5 <- as.numeric(fileSN5)
+
+sensDF5 <- data.frame(sensor_sid = fileSNn5)
+
+sensors5 <- sensors %>% filter(end_date == "current")
+
+
+sensors5$start_dateF <- mdy("10-18-2024")
+
+sensors5$end_dateF <- mdy("03-19-2025")
+
+sensors5 <- inner_join(sensors5, sensDF5, by="sensor_sid")
+
+# read in files
+datT5 <- list()
+
+for(i in 1: length(fileSN5)){
+  datT5[[i]] <- read.csv(paste0(dirT5,"/",tomstF5[i]), sep=";",
+                         header=FALSE)[,1:9]
+  colnames(datT5[[i]])[1:9] <- c("record","date","tz","Tm6","T2","T15","SM","shake","errFlag")
+  datT5[[i]]$SN <- rep(fileSN5[i], nrow(datT5[[i]]))
+  
+  datT5[[i]]$dateF <- ymd_hm(datT5[[i]]$date) 
+  datT5[[i]]$estD <- with_tz(datT5[[i]]$dateF, tzone="America/New_York")
+}
+
+
+sensorInfoL5 <- list()
+
+for(i in 1:length(fileSNn5)){
+  sensorInfoL5[[i]] <- sensors5 %>%
+    filter(sensors5$sensor_sid == fileSNn5[i])
+  
+}
+
+tail(datT5[[1]])
+
+
+for(i in 1:length(fileSNn5)){
+  datT5[[i]]$location <- rep("omit",nrow(datT5[[i]]))
+  datT5[[i]]$Plot <- rep("omit",nrow(datT5[[i]]))
+  for(j in 1:nrow(sensorInfoL5[[i]])){
+    
+    datT5[[i]]$location <- ifelse(datT5[[i]]$estD > sensorInfoL5[[i]]$start_dateF[j] & 
+                                    datT5[[i]]$estD < sensorInfoL5[[i]]$end_dateF[j],
+                                  sensorInfoL5[[i]]$location[j],datT5[[i]]$location)
+    
+    datT5[[i]]$Plot <- ifelse(datT5[[i]]$estD > sensorInfoL5[[i]]$start_dateF[j] & 
+                                datT5[[i]]$estD < sensorInfoL5[[i]]$end_dateF[j],
+                              sensorInfoL5[[i]]$Plot.name[j],datT5[[i]]$Plot)
+  }
+}  
+
+
+# combine all data
+
 tomstUL <- do.call("rbind",datT)
 
 tomstUL2 <- do.call("rbind",datT2)
 tomstUL3 <- do.call("rbind",datT3)
 tomstUL4 <- do.call("rbind",datT4)
+tomstUL5 <- do.call("rbind",datT5)
+
 
 tomstp1 <- tomstUL %>%
   filter(location != "omit")
@@ -300,15 +372,19 @@ tomstp3 <- tomstUL3 %>%
   filter(location != "omit")
 tomstp4 <- tomstUL4 %>%
   filter(location != "omit")
+tomstp5 <- tomstUL5 %>%
+  filter(location != "omit")
+
 tomst1 <- rbind(tomstp1,tomstp2)
 tomst2 <- rbind(tomst1,tomstp3)
-tomst <- rbind(tomst2,tomstp4)
+tomst3 <- rbind(tomst2,tomstp4)
+tomst <- rbind(tomst3,tomstp5)
 
 tomst$Tm6 <- as.numeric(gsub("\\,","\\.", tomst$Tm6))
 tomst$T2 <- as.numeric(gsub("\\,","\\.", tomst$T2))
 tomst$T15 <- as.numeric(gsub("\\,","\\.", tomst$T15))
 # silty loam moisture calibration all sites are silt loam
-tomst$SMcor <- (-0.000000017*(tomst$SM^2)) + (0.00011*tomst$SM) -0.1011
+tomst$SMcor <- (1.70E-8*(tomst$SM^2)) + (1.18E-4*tomst$SM) -0.1011
 
 # extra filter SM less than zero will be a sensor pulled out
 
@@ -327,7 +403,7 @@ tomstHour <- tomst %>%
             Tsurf2 = mean(T2, na.rm=TRUE),
             Tsurf15 = mean(T15, na.rm=TRUE),
             SWC = mean(SMcor, na.rm=TRUE))
-# no leap year yet
+# 
 tomstHour$DH <- tomstHour$doy + (tomstHour$hour/24)
 tomstHour$DD <- ifelse(leap_year(tomstHour$year),
                            tomstHour$year + ((tomstHour$DH-1)/366),
@@ -354,16 +430,13 @@ tomst24 <- tomstLocation %>%
            location == "Rogers reforestation" |
            location == "Spruce RG09" |
            location == "Buckthorn RG03" ) %>%
-  filter(year == 2024)
-tomst24$Date <- as.Date(tomst24$doy-1, origin="2024-01-01")
-tomst24$dateAll <- paste0(tomst24$Date, " ", tomst24$hour,":00") 
-tomst24$Timestamp <- ymd_hm(tomst24$dateAll)
-tomst24$month <- month(tomst24$Timestamp)
+  filter(year >= 2023 )
+
                           
-ggplot(tomst24, aes(Timestamp, Tsoil6, color=location))+
+ggplot(tomst24, aes(DD, Tsoil6, color=location))+
   geom_line()
 
-ggplot(tomst24, aes(Timestamp, SWC, color=location))+
+ggplot(tomst24, aes(DD, SWC, color=location))+
   geom_line()
 
 write.csv(tomst24,"K:/Environmental_Studies/hkropp/projects/canopy_LAI/soil/soil_10_18.csv", row.names=FALSE)
@@ -392,43 +465,7 @@ ggplot(tomstLocation %>% filter(location == "maple-beech"),
 
 ggplot(tomstLocation %>% filter(location == "Rogers reforestation"),
        aes(DD, Tsoil6, color=location))+
-  geom_line()+
-  geom_point()
-
-ggplot(tomstLocation %>% filter(location == "Rogers reforestation"& DD >2023.45 & DD < 2023.5),
-       aes(DD, Tsoil6, color=location))+
-  geom_line()+
-  geom_point()
-
-
-ggplot(tomstLocation %>% filter(location == "mowed lawn"),
-       aes(DD, Tsoil6, color=location))+
-  geom_line()
-ggplot(tomstLocation %>% filter(location == "ag field"),
-       aes(DD, Tsoil6, color=location))+
-  geom_line()
-
-ggplot(tomstLocation %>% filter(DD >= 2022.5),
-       aes(DD, Tsoil6, color=location))+
-  geom_line()
-
-ggplot(tomstLocation %>% filter(DD >= 2023.8),
-       aes(DD, SWC, color=location))+
-  geom_line()
-
-ggplot(tomstLocation %>% filter(DD >= 2023.8),
-       aes(DD, Tsoil6, color=location))+
   geom_line()
 
 
-ggplot(tomstLocation %>% filter(location == "Buckthorn RG03"|
-                                  location == "Spruce RG09"|
-                                  location == "hemlock sapflow"|
-                                  location == "Rogers reforestation"|
-                                  location == "maple-beech" ),
-       aes(DD, Tsoil6, color=location))+
-  geom_line()
 
-
-RR <- tomstLocation %>% filter(location == "Rogers reforestation")
-RRtest <- RR %>% filter(doy == 185 & year==2023)
