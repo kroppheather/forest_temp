@@ -413,6 +413,7 @@ tomstHour$DD <- ifelse(leap_year(tomstHour$year),
 tomstLocation <- tomstHour %>%
   group_by(location,year,doy,hour,DD) %>%
   summarise(Tsoil6 = mean(Tsoil6, na.rm=TRUE),
+            Tsoil6_sd = mean(Tsoil6, na.rm=TRUE),
             Tsurf2 = mean(Tsurf2, na.rm=TRUE),
             Tsurf15 = mean(Tsurf15, na.rm=TRUE),
             SWC = mean(SWC, na.rm=TRUE))
