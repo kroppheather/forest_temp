@@ -436,6 +436,9 @@ tomst24 <- tomstLocation %>%
 ggplot(tomst24, aes(DD, Tsoil6, color=location))+
   geom_line()
 
+ggplot(tomst24 %>% filter(DD>=2023.9 & DD<=2024.1), aes(DD, Tsoil6, color=location))+
+  geom_line()
+
 ggplot(tomst24, aes(DD, SWC, color=location))+
   geom_line()
 
