@@ -40,7 +40,12 @@ gmet <- rbind(gmet1,gmet2,gmet3,gmet4)
 gmet$dateF <- ymd(gmet$DATE)
 gmet$TAVE <- (gmet$TMAX+gmet$TMIN)/2
 gmet$year <- year(gmet$dateF)
-
+FDD <- function(x){
+  sum(x[x<=0],na.rm=TRUE)
+}
+TDD <- function(x){
+  sum(x[x>0],na.rm=TRUE)
+}
 # annual analysis
 met_annual <- gmet %>%
   group_by(year) %>%
@@ -52,8 +57,11 @@ met_annual <- gmet %>%
             nobsT=length(na.omit(TAVE)),
             maxSnow= max(SNWD, na.rm=TRUE),
             totPrecp=sum(PRCP, na.rm=TRUE),
-            nobsP=length(na.omit(PRCP)))%>%
+            nobsP=length(na.omit(PRCP)),
+            aFDD = FDD(TAVE),
+            aTDD = TDD(TAVE))%>%
   filter(nobsT>340)
+geneva$soilFreeze <- ifelse(geneva$soilT <= 0,1,0)
 
 # summarize soil
 soil_annual <- geneva %>%
@@ -61,17 +69,34 @@ soil_annual <- geneva %>%
   summarise(soilAve = mean(soilT, na.rm=TRUE),
             soilMax = max(soilT, na.rm=TRUE),
             soilMin =min(soilT,na.rm=TRUE),
-            nobs=length(na.omit(soilT))
+            nobs=length(na.omit(soilT)),
+            freezeDays = sum(soilFreeze, na.rm=TRUE),
+            sFDD = FDD(soilT),
+            sTDD = TDD(soilT)
             )%>%
   filter(nobs>340)
 soil8 <- soil_annual %>% filter(depth == 8)
+
+annual_all <- left_join(met_annual, soil8, by="year")
+ggplot(annual_all, aes(MAT, soilAve, color=year))+
+  geom_point()
+ggplot(annual_all, aes(aTDD, sTDD, color=year))+
+  geom_point()
+ggplot(annual_all, aes(minT, soilMin, color=year))+
+  geom_point()
 ggplot(met_annual, aes(year,MAT))+
+  geom_point()
+ggplot(met_annual, aes(year,aFDD))+
+  geom_point()
+ggplot(met_annual, aes(year,aTDD))+
   geom_point()
 ggplot(soil8, aes(year,soilAve))+
   geom_point()
 ggplot(soil8, aes(year,soilMin))+
   geom_point()
 ggplot(soil8, aes(year,soilMax))+
+  geom_point()
+ggplot(soil8, aes(year,sTDD))+
   geom_point()
 
 ggplot(met_annual, aes(year,minT))+
@@ -83,6 +108,8 @@ ggplot(met_annual, aes(year,maxSnow))+
 met_annual$yr_cnt <- met_annual$year-1990
 aveTrend <- lm(met_annual$MAT ~ met_annual$yr_cnt)
 summary(aveTrend)
+aTTrend <- lm(met_annual$aTDD ~ met_annual$yr_cnt)
+summary(aTTrend)
 maxTrend <- lm(met_annual$maxT ~ met_annual$yr_cnt)
 summary(maxTrend)
 minTrend <- lm(met_annual$minT ~ met_annual$yr_cnt)
@@ -103,29 +130,26 @@ summary(s_maxTrend)
 
 ######## Lye Brook VT------
 lbfiles <- list.files("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/long_term/Lye_Brook_VT",
-                     full.names = TRUE)
-
+                     full.names = TRUE, pattern=".csv")
+test <- read.csv(lbfiles[1], skip=6, na.strings=c("NA","-99.9"))
 # columns change over years need to fix
 yearly_lb <- list()
 org_df_lb <- list()
-for(i in 1:length(gfiles)){
+colnames <- list()
+for(i in 1:length(lbfiles)){
   yearly_lb[[i]] <- read.csv(lbfiles[i], skip=6, na.strings=c("NA","-99.9"))
-  org_df_lb[[i]] <- data.frame(yearly_lb[[i]][,2],
-                             yearly_lb[[i]][,5],
-                             yearly_lb[[i]][,7],
-                             yearly_lb[[i]][,8],
-                             yearly_lb[[i]][,9],
-                             yearly_lb[[i]][,10],
-                             yearly_lb[[i]][,16],
-                             yearly_lb[[i]][,17],
-                             yearly_lb[[i]][,18])
-  
+  colnames[[i]] <- colnames(yearly_lb[[i]])
+  org_df_lb[[i]] <- data.frame(Date = yearly_lb[[i]]$Date,
+                               airMax = yearly_lb[[i]]$TMAX.D.1..degC.,
+                               airMin = yearly_lb[[i]]$TMIN.D.1..degC.,
+                              soilT_2 = yearly_lb[[i]]$STO.I.1..2..degC.,
+                              soilT_4 = yearly_lb[[i]]$STO.I.1..4..degC.,
+                              soilT_8 = yearly_lb[[i]]$STO.I.1..8..degC.)
 }
 lb_all <- do.call("rbind",org_df_lb)
 
-colnames(lb_all) <- c("date","PREC","TMAX","TMIN","TAVE","SNWD","Tsoil2","Tsoil4","Tsoil8")
-lb_all$dateF <- ymd(lb_all$date)
+lb_all$dateF <- ymd(lb_all$Date)
 lb_all$year <- year(lb_all$dateF)
-ggplot(lb_all, aes(dateF, Tsoil4))+
-  geom_point()
+lb_all$airAve <- (lb_all$airMax + lb_all$airMin)/2
+
 
