@@ -198,4 +198,33 @@ summary(sa_aveTrend)
 
 ####### Harvard forest
 
-hf_met <- read.csv()
+hf_met <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/long_term/harvard/hf001-06-daily-m.csv")
+hf_met$dateF <- ymd(hf_met$date)
+hf_met$year <- year(hf_met$dateF)
+hf_met$airt_f <- ifelse(hf_met$f.airt == "Q",NA,hf_met$airt)
+hf_met$soil_t <- hf_met$s10t
+hf_annual <- hf_met %>%
+  group_by(year) %>%
+  summarize(MAT=mean(airt_f, na.rm=TRUE),
+            airMax = max(airt_f, na.rm=TRUE),
+            airMin =min(airt_f,na.rm=TRUE),
+            nobsAir=length(na.omit(airt_f)),
+            aFDD = FDD(airt_f),
+            aTDD = TDD(airt_f),
+            soilAT =mean(soil_t, na.rm=TRUE),
+            soilMax = max(soil_t, na.rm=TRUE),
+            soilMin =min(soil_t,na.rm=TRUE),
+            nobsSoil=length(na.omit(soil_t)),
+            sFDD = FDD(soil_t),
+            sTDD = TDD(soil_t))%>%
+  filter(nobsAir >= 340 & nobsSoil >= 340)
+ggplot(hf_annual, aes(year,soilAT))+
+  geom_point()
+ggplot(hf_annual, aes(year,MAT))+
+  geom_point()
+hf_annual$yr_cnt <- hf_annual$year-2000
+s_aveTrend <- lm(hf_annual$soilAT ~ hf_annual$yr_cnt)
+summary(s_aveTrend)
+
+a_aveTrend <- lm(hf_annual$MAT ~ hf_annual$yr_cnt)
+summary(a_aveTrend)
