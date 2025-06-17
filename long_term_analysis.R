@@ -152,4 +152,50 @@ lb_all$dateF <- ymd(lb_all$Date)
 lb_all$year <- year(lb_all$dateF)
 lb_all$airAve <- (lb_all$airMax + lb_all$airMin)/2
 
+annual_lb <- lb_all %>%
+  group_by(year) %>%
+  summarise(MAT = mean(airAve, na.rm=TRUE),
+            airMax = max(airAve, na.rm=TRUE),
+            airMin =min(airAve,na.rm=TRUE),
+            nobsAir=length(na.omit(airAve)),
+            aFDD = FDD(airAve),
+            aTDD = TDD(airAve),
+            soilAT =mean(soilT_8, na.rm=TRUE),
+            soilMax = max(soilT_8, na.rm=TRUE),
+            soilMin =min(soilT_8,na.rm=TRUE),
+            nobsSoil=length(na.omit(soilT_8)),
+            sFDD = FDD(soilT_8),
+            sTDD = TDD(soilT_8))%>%
+  filter(nobsAir >= 340 & nobsSoil >= 340)
 
+ggplot(annual_lb, aes(year,MAT))+
+  geom_point()
+ggplot(annual_lb, aes(year,aFDD))+
+  geom_point()
+ggplot(annual_lb, aes(year,aTDD))+
+  geom_point()
+ggplot(annual_lb, aes(year,sTDD))+
+  geom_point()
+ggplot(annual_lb, aes(year,soilAT))+
+  geom_point()
+ggplot(annual_lb, aes(year,sTDD))+
+  geom_point()
+ggplot(annual_lb, aes(year,soilMax))+
+  geom_point()
+
+ggplot(annual_lb, aes(MAT, soilAT))+
+  geom_point()
+annual_lb$yr_cnt <- annual_lb$year-2000
+s_aveTrend <- lm(annual_lb$soilAT ~ annual_lb$yr_cnt)
+summary(s_aveTrend)
+
+a_aveTrend <- lm(annual_lb$MAT ~ annual_lb$yr_cnt)
+summary(a_aveTrend)
+
+sa_aveTrend <- lm(annual_lb$soilAT ~ annual_lb$MAT)
+summary(sa_aveTrend)
+
+
+####### Harvard forest
+
+hf_met <- read.csv()
