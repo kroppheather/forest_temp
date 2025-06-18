@@ -448,7 +448,7 @@ ggplot(tomst24 %>% filter(month == 6), aes(Timestamp, Tsoil6, color=location))+
   geom_line()
 
 ggplot(tomst24 %>% filter(year == 2024), aes(DD, Tsoil6, color=location))+
-  geom_line(linewidth=1.5, alpha=0.5)
+  geom_line(linewidth=.75)
 
 ggplot(tomstLocation %>% filter(location == "weather station"),
        aes(DD, Tsoil6, color=location))+
