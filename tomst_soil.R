@@ -417,8 +417,41 @@ tomstLocation <- tomstHour %>%
             Tsurf15 = mean(Tsurf15, na.rm=TRUE),
             SWC = mean(SWC, na.rm=TRUE))
 
+tomstDay <- tomst %>%
+  group_by(location,Plot, year,doy) %>%
+  summarise(Tsoil6 = mean(Tm6, na.rm=TRUE),
+            Tsurf2 = mean(T2, na.rm=TRUE),
+            Tsurf15 = mean(T15, na.rm=TRUE),
+            SWC = mean(SMcor, na.rm=TRUE))
+
+tomstDayLocation <- na.omit(tomstDay) %>%
+  group_by(location, year,doy) %>%
+  summarise(Tsoil_6 = mean(Tsoil6),
+            Tsoil_6sd = sd(Tsoil6),
+            Tsurf_2 = mean(Tsurf2),
+            Tsurf_15 = mean(Tsurf15),
+            SWC_12 = mean(SWC),
+            Tsurf_2sd = sd(Tsurf2),
+            Tsurf_15sd = sd(Tsurf15),
+            SWC_12sd = sd(SWC),
+            nobs = n())%>%
+  filter(nobs ==3)
+tomstDayLocation$DD <- ifelse(leap_year(tomstDayLocation$year),((tomstDayLocation$doy-1)/366)+tomstDayLocation$year,
+                              ((tomstDayLocation$doy-1)/365)+tomstDayLocation$year)
 
 ggplot(tomstHour, aes(DD, Tsoil6, color=location))+
+  geom_line()
+
+ggplot(tomstDayLocation, aes(DD, Tsoil_6, color=location))+
+  geom_point()+
+  geom_line()
+
+ggplot(tomstLocation%>%filter(DD>=2024.4&DD<=2024.5), aes(DD, Tsoil6, color=location))+
+  geom_point()+
+  geom_line()
+
+ggplot(tomstLocation%>%filter(DD>=2024.0&DD<=2024.15), aes(DD, Tsoil6, color=location))+
+  geom_point()+
   geom_line()
 
 ggplot(tomstLocation, aes(DD, Tsoil6, color=location))+
@@ -447,7 +480,7 @@ write.csv(tomst24,"K:/Environmental_Studies/hkropp/projects/canopy_LAI/soil/soil
 ggplot(tomst24 %>% filter(month == 6), aes(Timestamp, Tsoil6, color=location))+
   geom_line()
 
-ggplot(tomst24 %>% filter(year == 2024), aes(DD, Tsoil6, color=location))+
+ggplot(tomst24 %>% filter(year >= 2024), aes(DD, Tsoil6, color=location))+
   geom_line(linewidth=.75)
 
 ggplot(tomstLocation %>% filter(location == "weather station"),
