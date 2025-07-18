@@ -2,7 +2,7 @@ library(dplyr)
 library(lubridate)
 library(ggplot2)
 
-# coop snow data from westermoreland
+# coop snow and precip data from westmoreland
 snow <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/climate/snow_westermoreland/4049483.csv")
 # units in mm
 snow$date <- ymd(snow$DATE)
@@ -26,7 +26,7 @@ ggplot(snow_annual, aes(year, max_depth))+
 ggplot(snow_annual, aes(year, tot_precip/1000))+
   geom_point()
 
-# syracuse climatology
+######## syracuse climatology -----
 syr <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/climate/SYR/4049536.csv")
 
 
@@ -192,3 +192,7 @@ summary(august_lm) # sig increase
 summary(sept_lm) # sig increase
 summary(oct_lm)
 summary(nov_lm)
+
+
+
+
