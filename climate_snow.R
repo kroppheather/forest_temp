@@ -10,6 +10,20 @@ snow$year <- year(snow$date)
 snow$doy <- yday(snow$date)
 snow$month <- month(snow$date)
 
+attrPR <- list()
+PR_m <- character()
+PR_q <- character()
+
+for(i in 1:nrow(snow)){
+  attrPR[[i]] <- strsplit(snow$PRCP_ATTRIBUTES[i],",")
+  PR_m[i] <- attrPR[[i]][[1]][1]
+  PR_q[i] <- attrPR[[i]][[1]][2]
+
+}
+
+snow$PR_m <- PR_m
+snow$PR_q <- PR_q
+
 ggplot(snow, aes(date,SNWD/1000))+
   geom_line()
 
