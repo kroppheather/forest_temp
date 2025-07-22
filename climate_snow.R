@@ -24,6 +24,32 @@ for(i in 1:nrow(snow)){
 snow$PR_m <- PR_m
 snow$PR_q <- PR_q
 
+attrSN <- list()
+SN_m <- list()
+SN_q <- list()
+for(i in 1:nrow(snow)){
+  attrSN[[i]] <- strsplit(snow$SNOW_ATTRIBUTES[i],",")
+  SN_m[i] <- attrSN[[i]][[1]][1]
+  SN_q[i] <- attrSN[[i]][[1]][2]
+  
+}
+
+attrSD <- list()
+SD_m <- list()
+SD_q <- list()
+for(i in 1:nrow(snow)){
+  attrSD[[i]] <- strsplit(snow$SNWD_ATTRIBUTES[i],",")
+  SD_m[i] <- attrSD[[i]][[1]][1]
+  SD_q[i] <- attrSD[[i]][[1]][2]
+  
+}
+
+snow$SN_m <- SN_m
+snow$SN_q <- SN_q
+
+snow$SD_m <- SD_m
+snow$SD_q <- SD_q
+
 ggplot(snow, aes(date,SNWD/1000))+
   geom_line()
 
