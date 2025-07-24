@@ -50,6 +50,12 @@ snow$SN_q <- SN_q
 snow$SD_m <- SD_m
 snow$SD_q <- SD_q
 
+unique(snow$PR_q)
+unique(snow$SN_q)
+
+check <- snow %>%
+  filter(PR_q == "L")
+
 ggplot(snow, aes(date,SNWD/1000))+
   geom_line()
 
