@@ -34,6 +34,10 @@ dirT4 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/10_18_24")
 currentD5 <- "03-20-2025"
 dirT5 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/03_20_25")
 
+# data downloaded in July
+currentD6 <- "07-22-2025"
+dirT6 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/07_22_25")
+
 
 
 tomstF <- list.files(paste0(dirT))

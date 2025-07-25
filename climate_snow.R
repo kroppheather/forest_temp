@@ -242,3 +242,6 @@ summary(nov_lm)
 
 
 
+
+
+
