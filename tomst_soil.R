@@ -535,51 +535,14 @@ ggplot(tomstLocation%>%filter(DD>=2025.2), aes(DD, Tsoil6, color=location))+
 ggplot(tomstLocation, aes(DD, Tsoil6, color=location))+
   geom_line()
 
-tomst24 <- tomstLocation %>%
+tomst25 <- tomstLocation %>%
   filter(location == "hemlock sapflow" |
            location == "maple-beech" |
            location == "Rogers reforestation" |
            location == "Spruce RG09" |
            location == "Buckthorn RG03" ) %>%
-  filter(year >= 2023 )
+  filter(year >= 2022 )
 
-                          
-ggplot(tomst24, aes(DD, Tsoil6, color=location))+
-  geom_line()
-
-ggplot(tomst24 %>% filter(DD>=2023.9 & DD<=2024.1), aes(DD, Tsoil6, color=location))+
-  geom_line()
-
-ggplot(tomst24, aes(DD, SWC, color=location))+
-  geom_line()
-
-write.csv(tomst24,"K:/Environmental_Studies/hkropp/projects/canopy_LAI/soil/soil_10_18.csv", row.names=FALSE)
-
-ggplot(tomst24 %>% filter(month == 6), aes(Timestamp, Tsoil6, color=location))+
-  geom_line()
-
-ggplot(tomst24 %>% filter(year >= 2024), aes(DD, Tsoil6, color=location))+
-  geom_line(linewidth=.75)
-
-ggplot(tomstLocation %>% filter(location == "weather station"),
-       aes(DD, Tsoil6, color=location))+
-  geom_line(size=1.5)
-
-ggplot(tomstLocation %>% filter(location == "Buckthorn RG03"),
-       aes(DD, Tsoil6, color=location))+
-  geom_line()
-
-ggplot(tomstLocation %>% filter(location == "hemlock sapflow"),
-       aes(DD, Tsoil6, color=location))+
-  geom_line()
-
-ggplot(tomstLocation %>% filter(location == "maple-beech"),
-       aes(DD, Tsoil6, color=location))+
-  geom_line()
-
-ggplot(tomstLocation %>% filter(location == "Rogers reforestation"),
-       aes(DD, Tsoil6, color=location))+
-  geom_line()
-
+ 
 
 
