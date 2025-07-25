@@ -543,6 +543,10 @@ tomst25 <- tomstLocation %>%
            location == "Buckthorn RG03" ) %>%
   filter(year >= 2022 )
 
- 
+ggplot(tomst25, aes(DD, SWC, color=location))+
+  geom_line()
 
+ggplot(tomst25%>%filter(year>=2025), aes(DD, SWC, color=location))+
+  geom_line() 
+rm(list=setdiff(ls(),c("tomst25")))
 
