@@ -356,6 +356,68 @@ for(i in 1:length(fileSNn5)){
   }
 }  
 
+# read in new data from D6
+#missing one reforestation sensor
+
+tomstF6 <- list.files(paste0(dirT6))
+fileSN6 <- character()
+sensors6ID <- character()
+for(i in 1:length(tomstF6)){
+  fileSN6[i] <- as.numeric(strsplit(tomstF6, "_")[[i]][2])
+}
+fileSNn6 <- as.numeric(fileSN6)
+
+sensDF6 <- data.frame(sensor_sid = fileSNn6)
+
+sensors6 <- sensors %>% filter(end_date == "current")
+
+
+sensors6$start_dateF <- mdy("03-20-2025")
+
+sensors6$end_dateF <- mdy("07-21-2025")
+
+sensors6 <- inner_join(sensors6, sensDF6, by="sensor_sid")
+
+# read in files
+datT6 <- list()
+
+for(i in 1: length(fileSN6)){
+  datT6[[i]] <- read.csv(paste0(dirT6,"/",tomstF6[i]), sep=";",
+                         header=FALSE)[,1:9]
+  colnames(datT6[[i]])[1:9] <- c("record","date","tz","Tm6","T2","T15","SM","shake","errFlag")
+  datT6[[i]]$SN <- rep(fileSN6[i], nrow(datT6[[i]]))
+  
+  datT6[[i]]$dateF <- ymd_hm(datT6[[i]]$date) 
+  datT6[[i]]$estD <- with_tz(datT6[[i]]$dateF, tzone="America/New_York")
+}
+
+
+sensorInfoL6 <- list()
+
+for(i in 1:length(fileSNn6)){
+  sensorInfoL6[[i]] <- sensors6 %>%
+    filter(sensors6$sensor_sid == fileSNn6[i])
+  
+}
+
+tail(datT6[[1]])
+
+
+for(i in 1:length(fileSNn6)){
+  datT6[[i]]$location <- rep("omit",nrow(datT6[[i]]))
+  datT6[[i]]$Plot <- rep("omit",nrow(datT6[[i]]))
+  for(j in 1:nrow(sensorInfoL6[[i]])){
+    
+    datT6[[i]]$location <- ifelse(datT6[[i]]$estD > sensorInfoL6[[i]]$start_dateF[j] & 
+                                    datT6[[i]]$estD < sensorInfoL6[[i]]$end_dateF[j],
+                                  sensorInfoL6[[i]]$location[j],datT6[[i]]$location)
+    
+    datT6[[i]]$Plot <- ifelse(datT6[[i]]$estD > sensorInfoL6[[i]]$start_dateF[j] & 
+                                datT6[[i]]$estD < sensorInfoL6[[i]]$end_dateF[j],
+                              sensorInfoL6[[i]]$Plot.name[j],datT6[[i]]$Plot)
+  }
+}  
+
 
 # combine all data
 
@@ -365,7 +427,7 @@ tomstUL2 <- do.call("rbind",datT2)
 tomstUL3 <- do.call("rbind",datT3)
 tomstUL4 <- do.call("rbind",datT4)
 tomstUL5 <- do.call("rbind",datT5)
-
+tomstUL6 <- do.call("rbind",datT6)
 
 tomstp1 <- tomstUL %>%
   filter(location != "omit")
@@ -378,11 +440,14 @@ tomstp4 <- tomstUL4 %>%
   filter(location != "omit")
 tomstp5 <- tomstUL5 %>%
   filter(location != "omit")
+tomstp6 <- tomstUL6 %>%
+  filter(location != "omit")
 
 tomst1 <- rbind(tomstp1,tomstp2)
 tomst2 <- rbind(tomst1,tomstp3)
 tomst3 <- rbind(tomst2,tomstp4)
-tomst <- rbind(tomst3,tomstp5)
+tomst4 <- rbind(tomst3,tomstp5)
+tomst <- rbind(tomst4,tomstp6)
 
 tomst$Tm6 <- as.numeric(gsub("\\,","\\.", tomst$Tm6))
 tomst$T2 <- as.numeric(gsub("\\,","\\.", tomst$T2))
@@ -438,8 +503,9 @@ tomstDayLocation <- na.omit(tomstDay) %>%
             Tsurf_2sd = sd(Tsurf2),
             Tsurf_15sd = sd(Tsurf15),
             SWC_12sd = sd(SWC),
-            nobs = n())%>%
-  filter(nobs ==3)
+            nobs = n())
+#%>% # view reforestation two sensors for now
+  #filter(nobs ==3)
 tomstDayLocation$DD <- ifelse(leap_year(tomstDayLocation$year),((tomstDayLocation$doy-1)/366)+tomstDayLocation$year,
                               ((tomstDayLocation$doy-1)/365)+tomstDayLocation$year)
 
@@ -455,6 +521,14 @@ ggplot(tomstLocation%>%filter(DD>=2024.4&DD<=2024.5), aes(DD, Tsoil6, color=loca
   geom_line()
 
 ggplot(tomstLocation%>%filter(DD>=2024.0&DD<=2024.15), aes(DD, Tsoil6, color=location))+
+  geom_point()+
+  geom_line()
+
+ggplot(tomstLocation%>%filter(DD>=2025.0&DD<2025.2), aes(DD, Tsoil6, color=location))+
+  geom_point()+
+  geom_line()
+
+ggplot(tomstLocation%>%filter(DD>=2025.2), aes(DD, Tsoil6, color=location))+
   geom_point()+
   geom_line()
 
