@@ -1,21 +1,41 @@
 ############## libraries ----
 library(dplyr)
 library(ggplot2)
+library(lubridate)
 ############## read in data ----
-
-canopyLAI <- read.csv("K:/Environmental_Studies/hkropp/Private/canopy/canopy_lai.csv")
-SpeciesInfo <- read.csv("K:/Environmental_Studies/hkropp/Private/canopy/speciesID.csv")
-forestInventory <- read.csv("K:/Environmental_Studies/hkropp/Private/canopy/HCEF forest inventory data.csv")
+c_dir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/canopy"
+canopyLAI <- read.csv(paste0(c_dir,"/canopy_lai_all.csv"))
+SpeciesInfo <- read.csv(paste0(c_dir,"/speciesID.csv"))
+forestInventory <- read.csv(paste0(c_dir,"/HCEF forest inventory data 25.csv"))
+plot_type <- read.csv(paste0(c_dir,"/FI_history_type_2025.csv"))
 ############ organize data -----
-
+canopyLAI$dateF <- mdy(canopyLAI$date_recorded)
+canopyLAI$year <- year(canopyLAI$dateF)
+canopyLAI$month <- month(canopyLAI$dateF)
 # average LAI by plot
 canopyPlot <- canopyLAI %>%
-  na.omit() %>%
-  group_by(site_id) %>%
-  summarize(LAI = mean(PAR_LAI),
-            sd_LAI = sd(PAR_LAI),
+  filter(is.na(PAR_LAI)!=TRUE)%>%
+  group_by(site_id, dateF) %>%
+  summarize(LAI = mean(PAR_LAI, na.rm=TRUE),
+            sd_LAI = sd(PAR_LAI, na.rm=TRUE),
             n_canopy = n())
+canopyPlot$year <- year(canopyPlot$dateF)
+canopyPlot$se <- canopyPlot$sd_LAI / sqrt(canopyPlot$n_canopy)
+# soil plots
+canopySoil <- canopyLAI %>%
+  filter(site_id == "RG03" | site_id == "RG25" | site_id == "RG01" | site_id == "RG09")
 
+canopySoil24 <- canopySoil %>%
+  filter(year == 2024)
+canopySoil_24 <- left_join(canopySoil24, plot_type[,1:2], by=c("site_id"="Plots") )
+
+ggplot(canopySoil_24, aes(x=as.factor(dateF), PAR_LAI, fill=Current_type))+
+  geom_boxplot()
+
+maxOut <- canopyLAI %>%
+  filter( month<= 8 )
+ggplot(maxOut, aes(as.factor(site_id),PAR_LAI,fill=as.factor(year)))+
+  geom_boxplot()
 # caclulate total tree area
 forestInventory$tree_area.cm2 <- (((forestInventory$DBH.cm / 2)^2) * pi) 
 
