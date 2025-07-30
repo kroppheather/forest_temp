@@ -2,6 +2,7 @@ library(dplyr)
 library(lubridate)
 library(ggplot2)
 
+
 # coop snow and precip data from westmoreland
 snow <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/climate/snow_westermoreland/4049483.csv")
 # units in mm
@@ -53,8 +54,7 @@ snow$SD_q <- SD_q
 unique(snow$PR_q)
 unique(snow$SN_q)
 
-check <- snow %>%
-  filter(PR_q == "L")
+
 
 ggplot(snow, aes(date,SNWD/1000))+
   geom_line()
@@ -114,6 +114,58 @@ syr_air_annual <- syr %>%
             aFDD=FDD(air_ave))%>%
   filter(nobsT > 360)
 syr_air_annual$yr_cnt <- syr_air_annual$year-1940
+
+
+
+syr_air_month <- syr %>%
+  group_by(year, month) %>%
+  summarize(tave = mean(air_ave, na.rm=TRUE),
+            tmax=max(TMAX, na.rm=TRUE),
+            tmin=min(TMIN, na.rm=TRUE),
+            nobsT=length(na.omit(air_ave)),
+            freezeD = sum(freezeDays, na.rm=TRUE),
+            max_depth =max(SNWD, na.rm=TRUE),
+            ave_depth =mean(SNWD, na.rm=TRUE))%>%
+  filter(nobsT >27)
+syr_air_month$yr_cnt <- syr_air_month$year - 1940
+
+
+syr_month_rec <- syr_air_month %>%
+  group_by(month) %>%
+  summarize(avg_tave = mean(tave),
+            n_rec = n(),
+            avg_freezeD = mean(freezeD),
+            avg_maxD = mean(max_depth),
+            avg_aveD = mean(ave_depth))
+
+
+syr_month_anom <- left_join(syr_air_month, syr_month_rec, by="month")
+syr_month_anom$air_anom <- syr_month_anom$tave - syr_month_anom$avg_tave
+syr_month_anom$d_year <- syr_month_anom$year+((syr_month_anom$month-1)/12)
+syr_month_anom$date <- my(paste0(syr_month_anom$month,"-",syr_month_anom$year))
+syr_month_anom$avg_snow_anom <- syr_month_anom$ave_depth-syr_month_anom$avg_aveD
+
+ggplot(syr_month_anom%>%filter(year>=2022), aes(x=date, y=air_anom))+
+  geom_point()
+ggplot(syr_month_anom%>%filter(year>=2022), aes(x=date, y=avg_snow_anom))+
+  geom_point()
+
+ggplot(syr_month_anom%>% filter(month==12), aes(x=date, y=air_anom))+
+  geom_point()
+ggplot(syr_month_anom%>% filter(month==12), aes(x=date, y=avg_snow_anom/1000))+
+  geom_point()+ylim(-0.2,0.35)
+
+ggplot(syr_month_anom%>% filter(month==1), aes(x=date, y=avg_snow_anom/1000))+
+  geom_point()
+ggplot(syr_month_anom%>% filter(month==2), aes(x=date, y=avg_snow_anom/1000))+
+  geom_point()
+ggplot(syr_month_anom%>% filter(month==3), aes(x=date, y=avg_snow_anom/1000))+
+  geom_point()
+
+# examine trends in SYR -----
+
+dec_syr <- syr_air_month %>%
+  filter(month == 12 & nobsT>=30)
 ggplot(syr_air_annual, aes(year, tave))+
   geom_point()
 ann_t <- lm(syr_air_annual$tave~syr_air_annual$yr_cnt)
@@ -128,18 +180,6 @@ ggplot(syr_air_annual, aes(year, aTDD))+
   geom_point()
 ggplot(syr_air_annual, aes(year, aFDD))+
   geom_point()
-
-syr_air_month <- syr %>%
-  group_by(year, month) %>%
-  summarize(tave = mean(air_ave, na.rm=TRUE),
-            tmax=max(TMAX, na.rm=TRUE),
-            tmin=min(TMIN, na.rm=TRUE),
-            nobsT=length(na.omit(air_ave)),
-            freezeD = sum(freezeDays, na.rm=TRUE))
-syr_air_month$yr_cnt <- syr_air_month$year - 1940
-dec_syr <- syr_air_month %>%
-  filter(month == 12 & nobsT>=30)
-
 #look at each month and allow one day missing
 jan_syr <- syr_air_month %>%
   filter(month == 1 & nobsT>=30)
