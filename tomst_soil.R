@@ -1,13 +1,13 @@
 # script for organizing tomst soil data
-
+# input dirComp and compID
 ##### libraries ----
 library(dplyr)
 library(ggplot2)
 library(lubridate)
 
-dirComp <- c("G:/My Drive/research/projects",
-             "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects")
-compID <- 2
+#dirComp <- c("G:/My Drive/research/projects",
+ #            "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects")
+#compID <- 2
 ##### directories and data files ----
 
 sensors <- read.csv(paste0(dirComp[compID],"/Data/campus_weather/TOMST/sensor inventory.csv"))
@@ -509,32 +509,6 @@ tomstDayLocation <- na.omit(tomstDay) %>%
 tomstDayLocation$DD <- ifelse(leap_year(tomstDayLocation$year),((tomstDayLocation$doy-1)/366)+tomstDayLocation$year,
                               ((tomstDayLocation$doy-1)/365)+tomstDayLocation$year)
 
-ggplot(tomstHour, aes(DD, Tsoil6, color=location))+
-  geom_line()
-
-ggplot(tomstDayLocation, aes(DD, Tsoil_6, color=location))+
-  geom_point()+
-  geom_line()
-
-ggplot(tomstLocation%>%filter(DD>=2024.4&DD<=2024.5), aes(DD, Tsoil6, color=location))+
-  geom_point()+
-  geom_line()
-
-ggplot(tomstLocation%>%filter(DD>=2024.0&DD<=2024.15), aes(DD, Tsoil6, color=location))+
-  geom_point()+
-  geom_line()
-
-ggplot(tomstLocation%>%filter(DD>=2025.0&DD<2025.2), aes(DD, Tsoil6, color=location))+
-  geom_point()+
-  geom_line()
-
-ggplot(tomstLocation%>%filter(DD>=2025.2), aes(DD, Tsoil6, color=location))+
-  geom_point()+
-  geom_line()
-
-ggplot(tomstLocation, aes(DD, Tsoil6, color=location))+
-  geom_line()
-
 tomst25 <- tomstLocation %>%
   filter(location == "hemlock sapflow" |
            location == "maple-beech" |
@@ -543,10 +517,6 @@ tomst25 <- tomstLocation %>%
            location == "Buckthorn RG03" ) %>%
   filter(year >= 2022 )
 
-ggplot(tomst25, aes(DD, SWC, color=location))+
-  geom_line()
 
-ggplot(tomst25%>%filter(year>=2025), aes(DD, SWC, color=location))+
-  geom_line() 
-rm(list=setdiff(ls(),c("tomst25")))
+rm(list=setdiff(ls(),c("tomst25","dirComp","compID")))
 
