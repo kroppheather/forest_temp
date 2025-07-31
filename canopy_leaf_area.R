@@ -6,9 +6,9 @@ library(lubridate)
 c_dir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/canopy"
 canopyLAI <- read.csv(paste0(c_dir,"/canopy_lai_all.csv"))
 SpeciesInfo <- read.csv(paste0(c_dir,"/speciesID.csv"))
-forestInventory <- read.csv(paste0(c_dir,"/HCEF forest inventory data 25.csv"))
+forestInventory <- read.csv(paste0(c_dir,"/HCEF forest inventory data 7_25.csv"))
 plot_type <- read.csv(paste0(c_dir,"/FI_history_type_2025.csv"))
-############ organize data -----
+############ organize leaf area data -----
 canopyLAI$dateF <- mdy(canopyLAI$date_recorded)
 canopyLAI$year <- year(canopyLAI$dateF)
 canopyLAI$month <- month(canopyLAI$dateF)
@@ -36,36 +36,39 @@ maxOut <- canopyLAI %>%
   filter( month<= 8 )
 ggplot(maxOut, aes(as.factor(site_id),PAR_LAI,fill=as.factor(year)))+
   geom_boxplot()
+
+############ forest inventory -----
 # caclulate total tree area
 forestInventory$tree_area.cm2 <- (((forestInventory$DBH.cm / 2)^2) * pi) 
 
 # add up tree area by species
 FI <- forestInventory %>%
-  filter(Dead == "N", DBH.cm >3 ) %>%
+  filter(Dead_1 == "N" ) %>%
   group_by(Plot, Species) %>%
-  summarise(totArea = sum(tree_area.cm2,na.rm=TRUE),
-            ncount = n(),
-            aveDBH = mean(DBH.cm,na.rm=TRUE))
+  summarise(Area_Spec = sum(tree_area.cm2,na.rm=TRUE),
+            ncount_Spec = n(),
+            aveDBH_Spec = mean(DBH.cm,na.rm=TRUE))
 # add up tree area by plot
 FITot <-  forestInventory %>%
-  filter(Dead == "N", DBH.cm >3 ) %>%
+  filter(Dead_1 == "N") %>%
   group_by(Plot) %>%
   summarise(totArea = sum(tree_area.cm2,na.rm=TRUE),
             ncount = n(),
             aveDBH = mean(DBH.cm,na.rm=TRUE))
 # calculate percent basal area by plot
 FIjoin <- left_join(FI,FITot, by="Plot")
-FIjoin$PercBA <- (FIjoin$totArea.x/FIjoin$totArea.y)*100 
+FIjoin$PercBA <- (FIjoin$Area_Spec/FIjoin$totArea)*100 
 
 
 ## get a summary of major dominant species at a plot ##
 
 # filter to look at only more dominant species with more than 20% of basal area
 FItop <- FIjoin %>%
-  filter(PercBA > 20)
+  filter(PercBA > 15)
 # subset to only focus on relevant columns
 PlotSpec <- FItop %>%
   select(Species,Plot, PercBA)
+
 # get list of all plots
 plotsI <- unique(PlotSpec$Plot)
 
@@ -100,7 +103,24 @@ for(i in 1:length(plotsI)){
 namecomp
 namePerc
 
-nameDF <- data.frame(Plot = plotsI, Names = namecomp, namePerc=namePerc)
+
+pasteSubC <- character()
+namecompC <- character()
+namePercC <- character()
+
+for(i in 1:length(plotsI)){
+  
+  pasteSubC <- PlotComp$Common.Name[PlotComp$Plot == plotsI[i]]
+  percSubC <-  paste0(pasteSubC, "(",round(PlotComp$PercBA[PlotComp$Plot == plotsI[i]],0),")")
+  namecompC[i] <- paste(pasteSubC,  collapse = ", ")
+  namePercC[i] <- paste(percSubC,  collapse = ", ")
+}
+namecompC
+namePercC
+
+nameDF <- data.frame(Plot = plotsI, Names = namecomp, namePerc=namePerc, cname=namecompC, cnamePerc=namePercC)
+
+#write.csv(nameDF, "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/canopy/inventory_summary_7_25.csv" )
 
 # combine LAI with dominate species
 
@@ -108,11 +128,9 @@ LAIinv <- inner_join(nameDF, canopyLAI, by=c("Plot" = "site_id"))
 
 ############ make plots -----
 
-ggplot(LAIinv, aes(namePerc, PAR_LAI))+
-  geom_boxplot()
 
 
-ggplot(LAIinv, aes(x=Plot, y=PAR_LAI, fill=namePerc))+
+ggplot(LAIinv, aes(x=Plot, y=PAR_LAI, fill=cname))+
   geom_boxplot()+
   xlab("Forest inventory plot")+
   ylab(expression(paste("Leaf area index (m"^2,""[leaf], " m"^-2,""[ground],")")))
