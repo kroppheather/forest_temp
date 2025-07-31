@@ -57,3 +57,15 @@ atmosDaily$Precip <- ifelse(atmosDaily$nPr == 24,atmosDaily$Precip,NA )
 atmosDaily$minT <- ifelse(atmosDaily$nAveT < 23|atmosDaily$minT == -Inf,NA, atmosDaily$minT)
 atmosDaily$maxT <- ifelse(atmosDaily$nAveT < 23|atmosDaily$maxT == Inf,NA,atmosDaily$maxT)
 atmosDaily$VPDd <- ifelse(atmosDaily$nVPD >= 23,atmosDaily$VPDd,NA )
+
+
+
+snowW <- snow %>%
+  select(year, doy, PRCP, SNOW, SNWD)
+
+weatherDay <- left_join(atmosDaily, snowW, by=c("year", "doy"))
+# gap fill missing station with westmoreland
+weatherDay$Precip_gap <- ifelse(is.na(weatherDay$Precip),weatherDay$PRCP,weatherDay$Precip)
+
+
+rm(list=setdiff(ls(),c("tomst25","weatherDay","atmosHourly","compID","dirComp")))
