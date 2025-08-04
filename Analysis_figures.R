@@ -38,3 +38,8 @@ soilAll$date <- as.Date(soilAll$doy-1, origin=paste0(soilAll$year, "-01-01"))
 
 
 #### basic time series plots to visualize data
+
+wd <- 20
+hd <- 10
+
+
