@@ -90,6 +90,22 @@ ggplot(soilmet%>%filter(location=="maple-beech"&aveT.x<0), aes(VWC_f, TSoil6))+
 
 ggplot(soilmet%>%filter(location=="maple-beech"&aveT.x<0), aes(aveT.x, TSoil6))+
   geom_point()
+ggplot(soilmet%>%filter(location=="maple-beech"&aveT.x>=0), aes(VWC_f, TSoil6))+
+  geom_point()
+ggplot(soilmet%>%filter(location=="Spruce RG09"&aveT.x>=0), aes(VWC_f, TSoil6))+
+  geom_point()
+ggplot(soilmet%>%filter(location=="Buckthorn RG03"&aveT.x>=0), aes(VWC_f, TSoil6))+
+  geom_point()
+ggplot(soilmet%>%filter(location=="hemlock sapflow"&aveT.x>=0), aes(VWC_f, TSoil6))+
+  geom_point()
+ggplot(soilmet%>%filter(location=="Rogers reforestation"&aveT.x>=0), aes(VWC_f, TSoil6))+
+  geom_point()
+
+ggplot(soilmet%>%filter(location=="Rogers reforestation"&aveT.x>=0), aes(VWC_f, TSoil6, color=as.factor(year)))+
+  geom_point()
+
+
+
 
 ggplot(soilmet, aes(SNWD, TSurf2, color=location))+
   geom_point(alpha=0.5)
