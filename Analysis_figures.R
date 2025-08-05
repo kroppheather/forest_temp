@@ -13,6 +13,7 @@
 library(dplyr)
 library(lubridate)
 library(ggplot2)
+library(zoo)
 dirComp <- c("G:/My Drive/research/projects",
              "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects")
 compID <- 2
@@ -36,6 +37,12 @@ soilAll$date <- as.Date(soilAll$doy-1, origin=paste0(soilAll$year, "-01-01"))
 
 soilAll$VWC_f <- ifelse(soilAll$TSoil6 <0,NA, soilAll$VWC)
 
+weatherDay$date <- as.Date(weatherDay$doy-1, origin=paste0(weatherDay$year, "-01-01"))
+weatherJoin <- weatherDay %>%
+  select(!c(aveT,nAveT,maxT,minT))
+soilmet <- left_join(soilAll, weatherJoin, by=c("doy","year"))
+
+# check assumptions for model. Verify linear -----
 ggplot(soilAll, aes(date, TSoil6, color=location))+
   geom_line(alpha=0.5)
 
@@ -49,8 +56,6 @@ ggplot(soilAll%>%filter(year==2025), aes(date, TSurf2, color=location))+
   geom_point(alpha=0.5)+
   geom_line()
 
-weatherDay$date <- as.Date(weatherDay$doy-1, origin=paste0(weatherDay$year, "-01-01"))
-
 ggplot(weatherDay, aes(date, SNWD/10))+
   geom_col(alpha=0.5)
 
@@ -58,7 +63,6 @@ ggplot(weatherDay, aes(date, SNWD/10))+
 ggplot(soilAll, aes(VWC_f, TSoil6, color=location))+
   geom_point(alpha=0.5)
 
-soilmet <- left_join(soilAll, weatherDay, by=c("doy","year"))
 
 ggplot(soilAll, aes(Tsurf15, TSoil6, color=location))+
   geom_point(alpha=0.5)
@@ -76,32 +80,32 @@ ggplot(soilAll%>%filter(location=="hemlock sapflow"), aes(aveT, TSoil6, color=VW
 ggplot(soilAll%>%filter(location=="maple-beech"), aes(aveT, TSoil6, color=VWC_f))+
   geom_point()
 
-ggplot(soilmet%>%filter(location=="Spruce RG09"&aveT.x<0), aes(aveT.x, TSoil6, color=SNWD))+
+ggplot(soilmet%>%filter(location=="Spruce RG09"&aveT<0), aes(aveT, TSoil6, color=SNWD))+
   geom_point()
-ggplot(soilmet%>%filter(location=="Buckthorn RG03"&aveT.x<0), aes(aveT.x, TSoil6, color=VWC_f))+
+ggplot(soilmet%>%filter(location=="Buckthorn RG03"&aveT<0), aes(aveT, TSoil6, color=VWC_f))+
   geom_point()
-ggplot(soilmet%>%filter(location=="Buckthorn RG03"&aveT.x<0), aes(VWC_f, TSoil6))+
+ggplot(soilmet%>%filter(location=="Buckthorn RG03"&aveT<0), aes(VWC_f, TSoil6))+
   geom_point()
-ggplot(soilmet%>%filter(location=="Spruce RG09"&aveT.x<0), aes(VWC_f, TSoil6))+
-  geom_point()
-
-ggplot(soilmet%>%filter(location=="maple-beech"&aveT.x<0), aes(VWC_f, TSoil6))+
+ggplot(soilmet%>%filter(location=="Spruce RG09"&aveT<0), aes(VWC_f, TSoil6))+
   geom_point()
 
-ggplot(soilmet%>%filter(location=="maple-beech"&aveT.x<0), aes(aveT.x, TSoil6))+
-  geom_point()
-ggplot(soilmet%>%filter(location=="maple-beech"&aveT.x>=0), aes(VWC_f, TSoil6))+
-  geom_point()
-ggplot(soilmet%>%filter(location=="Spruce RG09"&aveT.x>=0), aes(VWC_f, TSoil6))+
-  geom_point()
-ggplot(soilmet%>%filter(location=="Buckthorn RG03"&aveT.x>=0), aes(VWC_f, TSoil6))+
-  geom_point()
-ggplot(soilmet%>%filter(location=="hemlock sapflow"&aveT.x>=0), aes(VWC_f, TSoil6))+
-  geom_point()
-ggplot(soilmet%>%filter(location=="Rogers reforestation"&aveT.x>=0), aes(VWC_f, TSoil6))+
+ggplot(soilmet%>%filter(location=="maple-beech"&aveT<0), aes(VWC_f, TSoil6))+
   geom_point()
 
-ggplot(soilmet%>%filter(location=="Rogers reforestation"&aveT.x>=0), aes(VWC_f, TSoil6, color=as.factor(year)))+
+ggplot(soilmet%>%filter(location=="maple-beech"&aveT<0), aes(aveT, TSoil6))+
+  geom_point()
+ggplot(soilmet%>%filter(location=="maple-beech"&aveT>=0), aes(VWC_f, TSoil6))+
+  geom_point()
+ggplot(soilmet%>%filter(location=="Spruce RG09"&aveT>=0), aes(VWC_f, TSoil6))+
+  geom_point()
+ggplot(soilmet%>%filter(location=="Buckthorn RG03"&aveT>=0), aes(VWC_f, TSoil6))+
+  geom_point()
+ggplot(soilmet%>%filter(location=="hemlock sapflow"&aveT>=0), aes(VWC_f, TSoil6))+
+  geom_point()
+ggplot(soilmet%>%filter(location=="Rogers reforestation"&aveT>=0), aes(VWC_f, TSoil6))+
+  geom_point()
+
+ggplot(soilmet%>%filter(location=="Rogers reforestation"&aveT>=0), aes(VWC_f, TSoil6, color=as.factor(year)))+
   geom_point()
 
 
@@ -109,6 +113,28 @@ ggplot(soilmet%>%filter(location=="Rogers reforestation"&aveT.x>=0), aes(VWC_f, 
 
 ggplot(soilmet, aes(SNWD, TSurf2, color=location))+
   geom_point(alpha=0.5)
+
+############### check time series for each location
+dayAll <- data.frame(doy=c(seq(1,365),seq(1,365),seq(1,366),seq(1,365)),
+                    year=c(rep(2022,365),rep(2023,365),rep(2024,366),rep(2025,365)))
+
+weatherDays <- left_join(dayAll, weatherJoin, by=c("doy","year"))
+soilAll$DD <- ifelse(leap_year(soilAll$year),soilAll$year + ((soilAll$doy-1)/366),
+                     soilAll$year + ((soilAll$doy-1)/365))
+soilLoc <- list()
+Locsub <- list()
+Locs <- unique(soilAll$location)
+for(i in 1:length(Locs)){
+  Locsub[[i]] <- soilAll %>% filter(location == Locs[i])
+  soilLoc[[i]] <- left_join(weatherDays,Locsub[[i]], by=c("doy","year"))
+  soilLoc[[i]]$TsoilL1 <- c(soilLoc[[i]]$TSoil6[-1],NA)
+  soilLoc[[i]]$TsoilL2 <- c(soilLoc[[i]]$TSoil6[c(-1,-2)],NA,NA)
+  soilLoc[[i]]$TsoilL3 <- c(soilLoc[[i]]$TSoil6[c(-1,-2,-3)],NA,NA,NA)
+  soilLoc[[i]]$TsoilL4 <- c(soilLoc[[i]]$TSoil6[c(-1,-2,-3,-4)],NA,NA,NA,NA)
+}
+
+ggplot(soilLoc[[5]], aes(TsoilL4, TSoil6))+
+  geom_point()
 
 #### basic time series plots to visualize data
 
