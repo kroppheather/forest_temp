@@ -34,9 +34,25 @@ soilAll <- left_join(tomstDay, airDay, by=c("year","doy"))
 soilAll$TempDiff <- soilAll$TSoil6 - soilAll$aveT 
 soilAll$date <- as.Date(soilAll$doy-1, origin=paste0(soilAll$year, "-01-01"))
 
+soilAll$VWC_f <- ifelse(soilAll$TSoil6)
 
+ggplot(soilAll, aes(date, TSoil6, color=location))+
+  geom_line(alpha=0.5)
 
+ggplot(soilAll, aes(date, aveT))+
+  geom_line(alpha=0.5)
 
+ggplot(soilAll%>%filter(year==2025), aes(date, Tsurf15, color=location))+
+  geom_point(alpha=0.5)+
+  geom_line()
+ggplot(soilAll%>%filter(year==2025), aes(date, TSurf2, color=location))+
+  geom_point(alpha=0.5)+
+  geom_line()
+
+weatherDay$date <- as.Date(weatherDay$doy-1, origin=paste0(weatherDay$year, "-01-01"))
+
+ggplot(weatherDay, aes(date, SNWD/10))+
+  geom_col(alpha=0.5)
 #### basic time series plots to visualize data
 
 wd <- 20
