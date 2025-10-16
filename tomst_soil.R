@@ -5,9 +5,9 @@ library(dplyr)
 library(ggplot2)
 library(lubridate)
 
-#dirComp <- c("G:/My Drive/research/projects",
- #            "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects")
-#compID <- 2
+dirComp <- c("G:/My Drive/research/projects",
+            "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects")
+compID <- 2
 ##### directories and data files ----
 
 sensors <- read.csv(paste0(dirComp[compID],"/Data/campus_weather/TOMST/sensor inventory.csv"))
@@ -37,7 +37,9 @@ dirT5 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/03_20_25")
 # data downloaded in July
 currentD6 <- "07-22-2025"
 dirT6 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/07_22_25")
-
+# data downloaded in Oct
+currentD7 <- "10-16-2025"
+dirT7 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/10_16_2025")
 
 
 tomstF <- list.files(paste0(dirT))
@@ -419,6 +421,69 @@ for(i in 1:length(fileSNn6)){
 }  
 
 
+# read in new data from D7
+#missing one reforestation sensor
+
+tomstF7 <- list.files(paste0(dirT7))
+fileSN7 <- character()
+sensors7ID <- character()
+for(i in 1:length(tomstF7)){
+  fileSN7[i] <- as.numeric(strsplit(tomstF7, "_")[[i]][2])
+}
+fileSNn7 <- as.numeric(fileSN7)
+
+sensDF7 <- data.frame(sensor_sid = fileSNn7)
+
+sensors7 <- sensors %>% filter(end_date == "current")
+
+
+sensors7$start_dateF <- mdy("07-22-2025")
+
+sensors7$end_dateF <- mdy("10-15-2025")
+
+sensors7 <- inner_join(sensors7, sensDF7, by="sensor_sid")
+
+# read in files
+datT7 <- list()
+
+for(i in 1: length(fileSN7)){
+  datT7[[i]] <- read.csv(paste0(dirT7,"/",tomstF7[i]), sep=";",
+                         header=FALSE)[,1:9]
+  colnames(datT7[[i]])[1:9] <- c("record","date","tz","Tm6","T2","T15","SM","shake","errFlag")
+  datT7[[i]]$SN <- rep(fileSN7[i], nrow(datT7[[i]]))
+  
+  datT7[[i]]$dateF <- ymd_hm(datT7[[i]]$date) 
+  datT7[[i]]$estD <- with_tz(datT7[[i]]$dateF, tzone="America/New_York")
+}
+
+
+sensorInfoL7 <- list()
+
+for(i in 1:length(fileSNn7)){
+  sensorInfoL7[[i]] <- sensors7 %>%
+    filter(sensors7$sensor_sid == fileSNn7[i])
+  
+}
+
+tail(datT7[[1]])
+
+
+for(i in 1:length(fileSNn7)){
+  datT7[[i]]$location <- rep("omit",nrow(datT7[[i]]))
+  datT7[[i]]$Plot <- rep("omit",nrow(datT7[[i]]))
+  for(j in 1:nrow(sensorInfoL7[[i]])){
+    
+    datT7[[i]]$location <- ifelse(datT7[[i]]$estD > sensorInfoL7[[i]]$start_dateF[j] & 
+                                    datT7[[i]]$estD < sensorInfoL7[[i]]$end_dateF[j],
+                                  sensorInfoL7[[i]]$location[j],datT7[[i]]$location)
+    
+    datT7[[i]]$Plot <- ifelse(datT7[[i]]$estD > sensorInfoL7[[i]]$start_dateF[j] & 
+                                datT7[[i]]$estD < sensorInfoL7[[i]]$end_dateF[j],
+                              sensorInfoL7[[i]]$Plot.name[j],datT7[[i]]$Plot)
+  }
+}  
+
+
 # combine all data
 
 tomstUL <- do.call("rbind",datT)
@@ -428,6 +493,8 @@ tomstUL3 <- do.call("rbind",datT3)
 tomstUL4 <- do.call("rbind",datT4)
 tomstUL5 <- do.call("rbind",datT5)
 tomstUL6 <- do.call("rbind",datT6)
+tomstUL7 <- do.call("rbind",datT7)
+
 
 tomstp1 <- tomstUL %>%
   filter(location != "omit")
@@ -442,12 +509,16 @@ tomstp5 <- tomstUL5 %>%
   filter(location != "omit")
 tomstp6 <- tomstUL6 %>%
   filter(location != "omit")
+tomstp7 <- tomstUL7 %>%
+  filter(location != "omit")
+
 
 tomst1 <- rbind(tomstp1,tomstp2)
 tomst2 <- rbind(tomst1,tomstp3)
 tomst3 <- rbind(tomst2,tomstp4)
 tomst4 <- rbind(tomst3,tomstp5)
-tomst <- rbind(tomst4,tomstp6)
+tomst5 <- rbind(tomst4,tomstp6)
+tomst <- rbind(tomst5,tomstp7)
 
 tomst$Tm6 <- as.numeric(gsub("\\,","\\.", tomst$Tm6))
 tomst$T2 <- as.numeric(gsub("\\,","\\.", tomst$T2))
@@ -517,6 +588,8 @@ tomst25 <- tomstLocation %>%
            location == "Buckthorn RG03" ) %>%
   filter(year >= 2022 )
 
+ggplot(tomst25, aes(DD, SWC, color=location))+
+  geom_line()
 
 rm(list=setdiff(ls(),c("tomst25","dirComp","compID")))
 
