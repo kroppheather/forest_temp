@@ -591,5 +591,8 @@ tomst25 <- tomstLocation %>%
 ggplot(tomst25, aes(DD, SWC, color=location))+
   geom_line()
 
+ggplot(tomst25 %>% filter(year == 2025), aes(DD, SWC, color=location))+
+  geom_line()
+
 rm(list=setdiff(ls(),c("tomst25","dirComp","compID")))
 
