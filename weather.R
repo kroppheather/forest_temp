@@ -16,7 +16,7 @@ compID <- 2
 atmos <- read.csv(paste0(dirComp[compID],"/forest_soil/climate/weather_campus/v1.7/Atmos41_weather.csv"))
 
 
-snow <- # coop snow and precip data from westmoreland
+# coop snow and precip data from westmoreland
   snow <- read.csv(paste0(dirComp[compID],"/forest_soil/climate/snow_westermoreland/4049483.csv"))
 # units in mm
 snow$date <- ymd(snow$DATE)
@@ -36,6 +36,7 @@ atmosHourly <- atmos %>%
             VPD = mean(VPD, na.rm=TRUE),
             nVPD = length(na.omit(VPD)),
             Prec = sum(Precip_F))
+
             
   
 atmosDaily <- atmosHourly %>%
@@ -58,14 +59,42 @@ atmosDaily$minT <- ifelse(atmosDaily$nAveT < 23|atmosDaily$minT == -Inf,NA, atmo
 atmosDaily$maxT <- ifelse(atmosDaily$nAveT < 23|atmosDaily$maxT == Inf,NA,atmosDaily$maxT)
 atmosDaily$VPDd <- ifelse(atmosDaily$nVPD >= 23,atmosDaily$VPDd,NA )
 
+#NOAA coop data is recorded at 0700
+precip7am <-  atmosHourly %>%
+  select(year, doy, hour, Prec)
 
+precip7am$doy7 <- ifelse(precip7am$hour <=7 & leap_year(precip7am$year)==FALSE & precip7am$doy <365, precip7am$doy, 
+                  ifelse(precip7am$hour > 7 & leap_year(precip7am$year)==FALSE & precip7am$doy <365,precip7am$doy+1,
+                  ifelse(precip7am$hour > 7 & leap_year(precip7am$year)==FALSE & precip7am$doy ==365,1,
+                  ifelse(precip7am$hour <=7 & leap_year(precip7am$year)==FALSE & precip7am$doy ==365, precip7am$doy,
+                  ifelse(precip7am$hour <=7 & leap_year(precip7am$year)==TRUE & precip7am$doy <366, precip7am$doy, 
+                  ifelse(precip7am$hour > 7 & leap_year(precip7am$year)==TRUE & precip7am$doy <366,precip7am$doy+1,
+                  ifelse(precip7am$hour > 7 & leap_year(precip7am$year)==TRUE & precip7am$doy ==366,1,
+                  ifelse(precip7am$hour <=7 & leap_year(precip7am$year)==TRUE & precip7am$doy ==366, precip7am$doy,NA))))))))
 
+precip7Daily <- precip7am %>%
+  group_by(year, doy7) %>%
+  summarise(Precip7 = sum(Prec, na.rm=TRUE),
+            nPr7 = length(na.omit(Prec)))
+precip7Daily$Precip7 <- ifelse(precip7Daily$nPr7 == 24,precip7Daily$Precip7,NA )
+  
 snowW <- snow %>%
   select(year, doy, PRCP, SNOW, SNWD)
 
-weatherDay <- left_join(atmosDaily, snowW, by=c("year", "doy"))
+weatherDay1 <- left_join(atmosDaily, snowW, by=c("year", "doy"))
+weatherDay <- left_join(weatherDay1, precip7Daily, by=c("year"="year", "doy"="doy7"))
+
+plot(weatherDay$PRCP, weatherDay$Precip7, pch=19)
+
+precipGap <- lm(weatherDay$Precip7 ~ weatherDay$PRCP)
+summary(precipGap)
+abline(precipGap)
+abline(0,1, col="red")
+
+ggplot(weatherDay, aes(PRCP, Precip))+
+  geom_point()
 # gap fill missing station with westmoreland
-weatherDay$Precip_gap <- ifelse(is.na(weatherDay$Precip),weatherDay$PRCP,weatherDay$Precip)
+weatherDay$Precip_gap <- ifelse(is.na(weatherDay$Precip7),weatherDay$PRCP,weatherDay$Precip7)
 
 
 rm(list=setdiff(ls(),c("tomst25","weatherDay","atmosHourly","compID","dirComp")))
