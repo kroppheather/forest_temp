@@ -23,21 +23,17 @@ source("/Users/hkropp/Documents/GitHub/forest_temp/weather.r")
 
 ##### aggregate all data to daily level and join with weather ----
 
-tomstDay <- tomst25 %>%
-  group_by(location, year, doy ) %>%
-  summarize(TSoil6 = mean(Tsoil6),
-            TSurf2 = mean(Tsurf2),
-            Tsurf15=mean(Tsurf15),
-            VWC=mean(SWC))
+tomstDay <- tomst25
 
 airDay <- weatherDay %>%
   select(doy, year, aveT, maxT, minT)
+
 soilAll <- left_join(tomstDay, airDay, by=c("year","doy"))
 
-soilAll$TempDiff <- soilAll$TSoil6 - soilAll$aveT 
+soilAll$TempDiff <- soilAll$Tsoil_6 - soilAll$aveT 
 soilAll$date <- as.Date(soilAll$doy-1, origin=paste0(soilAll$year, "-01-01"))
 
-soilAll$VWC_f <- ifelse(soilAll$TSoil6 <0,NA, soilAll$VWC)
+soilAll$VWC_f <- ifelse(soilAll$Tsoil_6 <0,NA, soilAll$SWC_12)
 
 weatherDay$date <- as.Date(weatherDay$doy-1, origin=paste0(weatherDay$year, "-01-01"))
 weatherJoin <- weatherDay %>%
@@ -47,7 +43,7 @@ soilmet <- left_join(soilAll, weatherJoin, by=c("doy","year","date"))
 ##### VWC and frozen soils ----
 
 # gap fill freezing soil data from measurements before freeze
-soilmet$freezeSoil <- ifelse(soilmet$TSoil6<0,1,0)
+soilmet$freezeSoil <- ifelse(soilmet$Tsoil_6<0,1,0)
 
 soilMet <- soilmet %>%
   arrange(location, year,doy)
@@ -112,7 +108,7 @@ for(i in 1:nrow(freezeCheck)){
   soilSub <- soilMet %>%
     filter(doy==freezeCheck$freezeLastDay[i]& year==freezeCheck$freezeLastDayYear[i] &
              location == freezeCheck$location[i])
-  freezeFill[i] <- soilSub$VWC
+  freezeFill[i] <- soilSub$SWC_12
 }
 freezeCheck$lastVWC <- freezeFill
 
@@ -121,7 +117,7 @@ freezeJoin <- freezeCheck %>%
 
 soilMet <- left_join(soilMet, freezeJoin, by=c("location","year","doy"))
 
-soilMet$VWC_gap <- ifelse(soilMet$freezeSoil == 1, soilMet$lastVWC, soilMet$VWC)
+soilMet$VWC_gap <- ifelse(soilMet$freezeSoil == 1, soilMet$lastVWC, soilMet$SWC_12)
 
 
 ######## organize for model ----

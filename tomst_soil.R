@@ -580,7 +580,7 @@ tomstDayLocation <- na.omit(tomstDay) %>%
 tomstDayLocation$DD <- ifelse(leap_year(tomstDayLocation$year),((tomstDayLocation$doy-1)/366)+tomstDayLocation$year,
                               ((tomstDayLocation$doy-1)/365)+tomstDayLocation$year)
 
-tomst25 <- tomstLocation %>%
+tomst25 <- tomstDayLocation %>%
   filter(location == "hemlock sapflow" |
            location == "maple-beech" |
            location == "Rogers reforestation" |
@@ -588,7 +588,7 @@ tomst25 <- tomstLocation %>%
            location == "Buckthorn RG03" ) %>%
   filter(year >= 2022 )
 
-ggplot(tomst25, aes(DD, SWC, color=location))+
+ggplot(tomst25, aes(DD, SWC_12, color=location))+
   geom_line()
 
 ggplot(tomst25 %>% filter(year == 2025), aes(DD, SWC, color=location))+
