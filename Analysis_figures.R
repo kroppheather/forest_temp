@@ -42,6 +42,84 @@ weatherJoin <- weatherDay %>%
   select(!c(aveT,nAveT,maxT,minT))
 soilmet <- left_join(soilAll, weatherJoin, by=c("doy","year"))
 
+
+# gap fill freezing soil data from measurements before freeze
+soilmet$freezeSoil <- ifelse(soilmet$TSoil6<0,1,0)
+
+soilMet <- soilmet %>%
+  arrange(location, year,doy)
+
+freezeCheck<- soilMet %>%
+  filter(freezeSoil == 1)
+# get all freeze events
+freezeEvent <- c(1)
+  for(i in 2:nrow(freezeCheck)){
+    if(freezeCheck$location[i-1] == freezeCheck$location[i] &
+      freezeCheck$year[i-1] == freezeCheck$year[i] & 
+      freezeCheck$doy[i-1] == (freezeCheck$doy[i]-1)){
+      freezeEvent[i] <- freezeEvent[i-1]
+      
+    }else{
+      freezeEvent[i] <-freezeEvent[i-1]+1}
+     
+  }
+# label start of an event
+freezeStart <- c(1)
+  for(i in 2:nrow(freezeCheck)){
+    if(freezeEvent[i-1]!=freezeEvent[i]){
+      freezeStart[i] <- 1
+    }else{
+      freezeStart[i] <- 0
+    }
+  }
+
+# get the day before the freeze
+freezeLastDay <-  freezeCheck$doy[1]-1
+for(i in 2:nrow(freezeCheck)){
+  if(freezeStart[i] == 1){
+    freezeLastDay[i] <- freezeCheck$doy[i]-1
+  }else{
+    freezeLastDay[i] <- freezeLastDay[i-1]
+  }
+}
+
+freezeLastDayYear <-  freezeCheck$year[1]
+for(i in 2:nrow(freezeCheck)){
+  if(freezeStart[i] == 1){
+    freezeLastDayYear[i] <- freezeCheck$year[i]
+  }else{
+    freezeLastDayYear[i] <- freezeLastDayYear[i-1]
+  }
+}
+
+freezeCheck$freezeStart <- freezeStart
+
+freezeCheck$freezeEvent <- freezeEvent
+
+freezeCheck$freezeLastDayYear <- freezeLastDayYear
+freezeCheck$freezeLastDay <- freezeLastDay
+
+
+soilSub <- soilMet %>%
+  filter(doy==freezeCheck$freezeLastDay[1] & year==freezeCheck$freezeLastDayYear[1] &
+           location == freezeCheck$location[1])
+
+freezeFill <- numeric()
+for(i in 1:nrow(freezeCheck)){
+  soilSub <- soilMet %>%
+    filter(doy==freezeCheck$freezeLastDay[i]& year==freezeCheck$freezeLastDayYear[i] &
+             location == freezeCheck$location[i])
+  freezeFill[i] <- soilSub$VWC
+}
+freezeCheck$lastVWC <- freezeFill
+
+freezeJoin <- freezeCheck %>%
+  select(location,year,doy,freezeEvent, freezeStart, lastVWC)
+
+soilMet <- left_join(soilMet, freezeJoin, by=c("location","year","doy"))
+
+soilMet$VWC_gap <- ifelse(soilMet$freezeSoil == 1, soilMet$lastVWC, soilMet$VWC)
+
 # check assumptions for model. Verify linear -----
 ggplot(soilAll, aes(date, TSoil6, color=location))+
   geom_line(alpha=0.5)
