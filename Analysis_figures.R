@@ -21,6 +21,7 @@ compID <- 2
 source("/Users/hkropp/Documents/GitHub/forest_temp/tomst_soil.r")
 source("/Users/hkropp/Documents/GitHub/forest_temp/weather.r")
 
+##### aggregate all data to daily level and join with weather ----
 
 tomstDay <- tomst25 %>%
   group_by(location, year, doy ) %>%
@@ -28,6 +29,7 @@ tomstDay <- tomst25 %>%
             TSurf2 = mean(Tsurf2),
             Tsurf15=mean(Tsurf15),
             VWC=mean(SWC))
+
 airDay <- weatherDay %>%
   select(doy, year, aveT, maxT, minT)
 soilAll <- left_join(tomstDay, airDay, by=c("year","doy"))
@@ -42,6 +44,7 @@ weatherJoin <- weatherDay %>%
   select(!c(aveT,nAveT,maxT,minT))
 soilmet <- left_join(soilAll, weatherJoin, by=c("doy","year","date"))
 
+##### VWC and frozen soils ----
 
 # gap fill freezing soil data from measurements before freeze
 soilmet$freezeSoil <- ifelse(soilmet$TSoil6<0,1,0)
@@ -120,96 +123,9 @@ soilMet <- left_join(soilMet, freezeJoin, by=c("location","year","doy"))
 
 soilMet$VWC_gap <- ifelse(soilMet$freezeSoil == 1, soilMet$lastVWC, soilMet$VWC)
 
-# check assumptions for model. Verify linear -----
-ggplot(soilAll, aes(date, TSoil6, color=location))+
-  geom_line(alpha=0.5)
 
-ggplot(soilAll, aes(date, aveT))+
-  geom_line(alpha=0.5)
-
-ggplot(soilAll%>%filter(year==2025), aes(date, Tsurf15, color=location))+
-  geom_point(alpha=0.5)+
-  geom_line()
-ggplot(soilAll%>%filter(year==2025), aes(date, TSurf2, color=location))+
-  geom_point(alpha=0.5)+
-  geom_line()
-
-ggplot(soilMet%>%filter(year==2025), aes(date, VWC_gap, color=location))+
-  geom_point(alpha=0.5)+
-  geom_line()
-
-ggplot(weatherDay, aes(date, SNWD/10))+
-  geom_line(alpha=0.5)
-
-ggplot(soilMet, aes(date, VWC_gap, color=location))+
-  geom_line(alpha=0.5)
+######## organize for model ----
 
 
-
-ggplot(soilAll, aes(VWC_f, TSoil6, color=location))+
-  geom_point(alpha=0.5)
-
-
-ggplot(soilAll, aes(Tsurf15, TSoil6, color=location))+
-  geom_point(alpha=0.5)
-ggplot(soilAll, aes(aveT, Tsurf15, color=location))+
-  geom_point(alpha=0.5)
-
-ggplot(soilMet, aes(date, Tsurf15, color=location))+
-  geom_line(alpha=0.5)
-
-ggplot(soilMet%>%filter(year == 2025), aes(date, Tsurf15, color=location))+
-  geom_line(alpha=0.5)
-
-ggplot(soilAll, aes(aveT, TSoil6, color=location))+
-  geom_point(alpha=0.5)
-
-ggplot(soilMet%>%filter(location=="Buckthorn RG03"), aes(aveT, TSoil6, color=VWC_gap))+
-  geom_point()
-ggplot(soilMet%>%filter(location=="Rogers reforestation"), aes(aveT, TSoil6, color=VWC_gap))+
-  geom_point()
-ggplot(soilMet%>%filter(location=="Spruce RG09"), aes(aveT, TSoil6, color=VWC_gap))+
-  geom_point()
-ggplot(soilMet%>%filter(location=="hemlock sapflow"), aes(aveT, TSoil6, color=VWC_gap))+
-  geom_point()
-ggplot(soilMet%>%filter(location=="maple-beech"), aes(aveT, TSoil6, color=VWC_gap))+
-  geom_point()
-
-ggplot(soilmet%>%filter(location=="Spruce RG09"&aveT<0), aes(aveT, TSoil6, color=SNWD))+
-  geom_point()
-ggplot(soilmet%>%filter(location=="Buckthorn RG03"&aveT<0), aes(aveT, TSoil6, color=VWC_f))+
-  geom_point()
-ggplot(soilmet%>%filter(location=="Buckthorn RG03"&aveT<0), aes(VWC_f, TSoil6))+
-  geom_point()
-ggplot(soilmet%>%filter(location=="Spruce RG09"&aveT<0), aes(VWC_f, TSoil6))+
-  geom_point()
-
-ggplot(soilmet%>%filter(location=="maple-beech"&aveT<0), aes(VWC_f, TSoil6))+
-  geom_point()
-
-ggplot(soilmet%>%filter(location=="maple-beech"), aes(aveT, TSoil6, color=aveT))+
-  geom_point()
-ggplot(soilmet%>%filter(location=="maple-beech"&aveT>=0), aes(VWC_f, TSoil6, color=aveT))+
-  geom_point()
-ggplot(soilmet%>%filter(location=="maple-beech"&aveT<0), aes(VWC_f, TSoil6, color=aveT))+
-  geom_point()
-ggplot(soilmet%>%filter(location=="Spruce RG09"&aveT>=0), aes(VWC_f, TSoil6, color=aveT))+
-  geom_point()
-ggplot(soilmet%>%filter(location=="Buckthorn RG03"&aveT>=0), aes(VWC_f, TSoil6, color=aveT))+
-  geom_point()
-ggplot(soilmet%>%filter(location=="hemlock sapflow"&aveT>=0), aes(VWC_f, TSoil6, color=aveT))+
-  geom_point()
-ggplot(soilmet%>%filter(location=="Rogers reforestation"), aes(VWC_f, TSoil6, color=aveT))+
-  geom_point()
-
-ggplot(soilmet%>%filter(location=="Rogers reforestation"), aes(VWC_f, TSoil6, color=as.factor(year)))+
-  geom_point()
-
-
-
-
-ggplot(soilmet, aes(SNWD, TSurf2, color=location))+
-  geom_point(alpha=0.5)
-rf <- soilmet%>%filter(location=="Rogers reforestation" & year == 2024)
-
+######## figures ----
 
