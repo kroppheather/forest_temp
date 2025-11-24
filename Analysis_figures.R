@@ -40,7 +40,7 @@ soilAll$VWC_f <- ifelse(soilAll$TSoil6 <0,NA, soilAll$VWC)
 weatherDay$date <- as.Date(weatherDay$doy-1, origin=paste0(weatherDay$year, "-01-01"))
 weatherJoin <- weatherDay %>%
   select(!c(aveT,nAveT,maxT,minT))
-soilmet <- left_join(soilAll, weatherJoin, by=c("doy","year"))
+soilmet <- left_join(soilAll, weatherJoin, by=c("doy","year","date"))
 
 
 # gap fill freezing soil data from measurements before freeze
@@ -134,8 +134,16 @@ ggplot(soilAll%>%filter(year==2025), aes(date, TSurf2, color=location))+
   geom_point(alpha=0.5)+
   geom_line()
 
+ggplot(soilMet%>%filter(year==2025), aes(date, VWC_gap, color=location))+
+  geom_point(alpha=0.5)+
+  geom_line()
+
 ggplot(weatherDay, aes(date, SNWD/10))+
-  geom_col(alpha=0.5)
+  geom_line(alpha=0.5)
+
+ggplot(soilMet, aes(date, VWC_gap, color=location))+
+  geom_line(alpha=0.5)
+
 
 
 ggplot(soilAll, aes(VWC_f, TSoil6, color=location))+
@@ -144,18 +152,27 @@ ggplot(soilAll, aes(VWC_f, TSoil6, color=location))+
 
 ggplot(soilAll, aes(Tsurf15, TSoil6, color=location))+
   geom_point(alpha=0.5)
+ggplot(soilAll, aes(aveT, Tsurf15, color=location))+
+  geom_point(alpha=0.5)
+
+ggplot(soilMet, aes(date, Tsurf15, color=location))+
+  geom_line(alpha=0.5)
+
+ggplot(soilMet%>%filter(year == 2025), aes(date, Tsurf15, color=location))+
+  geom_line(alpha=0.5)
+
 ggplot(soilAll, aes(aveT, TSoil6, color=location))+
   geom_point(alpha=0.5)
 
-ggplot(soilAll%>%filter(location=="Buckthorn RG03"), aes(aveT, TSoil6, color=VWC_f))+
+ggplot(soilMet%>%filter(location=="Buckthorn RG03"), aes(aveT, TSoil6, color=VWC_gap))+
   geom_point()
-ggplot(soilAll%>%filter(location=="Rogers reforestation"), aes(aveT, TSoil6, color=VWC_f))+
+ggplot(soilMet%>%filter(location=="Rogers reforestation"), aes(aveT, TSoil6, color=VWC_gap))+
   geom_point()
-ggplot(soilAll%>%filter(location=="Spruce RG09"), aes(aveT, TSoil6, color=VWC_f))+
+ggplot(soilMet%>%filter(location=="Spruce RG09"), aes(aveT, TSoil6, color=VWC_gap))+
   geom_point()
-ggplot(soilAll%>%filter(location=="hemlock sapflow"), aes(aveT, TSoil6, color=VWC_f))+
+ggplot(soilMet%>%filter(location=="hemlock sapflow"), aes(aveT, TSoil6, color=VWC_gap))+
   geom_point()
-ggplot(soilAll%>%filter(location=="maple-beech"), aes(aveT, TSoil6, color=VWC_f))+
+ggplot(soilMet%>%filter(location=="maple-beech"), aes(aveT, TSoil6, color=VWC_gap))+
   geom_point()
 
 ggplot(soilmet%>%filter(location=="Spruce RG09"&aveT<0), aes(aveT, TSoil6, color=SNWD))+
