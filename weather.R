@@ -13,11 +13,11 @@ compID <- 2
 
 
 ##
-atmos <- read.csv(paste0(dirComp[compID],"/forest_soil/climate/weather_campus/v1.7/Atmos41_weather.csv"))
+atmos <- read.csv(paste0(dirComp[compID],"/forest_soil/climate/weather_campus/v1.8/Atmos41_weather.csv"))
 
 
 # coop snow and precip data from westmoreland
-  snow <- read.csv(paste0(dirComp[compID],"/forest_soil/climate/snow_westermoreland/4049483.csv"))
+  snow <- read.csv(paste0(dirComp[compID],"/forest_soil/climate/snow_westermoreland/11_25_25/4175415.csv"))
 # units in mm
 snow$date <- ymd(snow$DATE)
 snow$year <- year(snow$date)
