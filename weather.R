@@ -24,6 +24,18 @@ snow$year <- year(snow$date)
 snow$doy <- yday(snow$date)
 snow$month <- month(snow$date)
 
+romeWeather <- read.csv(paste0(dirComp[compID],"/forest_soil/climate/Rome/4175652.csv"))
+rome <- romeWeather %>%
+  filter(REPORT_TYPE == "SOD") %>%
+  select(DATE,DailyPrecipitation,DailyWeather)
+rome$date <- ymd_hms(rome$DATE)
+rome$year <- year(rome$date)
+rome$doy <- yday(rome$date)
+rome$rome_rain_ID <- ifelse(grepl("RA", rome$DailyWeather),1,0)
+rome$rome_snow_ID <- ifelse(grepl("SN", rome$DailyWeather),1,0)
+rome$rome_precip <- ifelse(rome$DailyPrecipitation == "T",0,as.numeric(rome$DailyPrecipitation))
+rome <- rome %>%
+  select(year,doy, rome_precip, rome_rain_ID, rome_snow_ID)
 
 atmos$Precip_F <- ifelse(is.na(atmos$PrecipFlag), atmos$Precip, NA)
 
@@ -84,17 +96,32 @@ snowW <- snow %>%
 weatherDay1 <- left_join(atmosDaily, snowW, by=c("year", "doy"))
 weatherDay <- left_join(weatherDay1, precip7Daily, by=c("year"="year", "doy"="doy7"))
 
-plot(weatherDay$PRCP, weatherDay$Precip7, pch=19)
 
-precipGap <- lm(weatherDay$Precip7 ~ weatherDay$PRCP)
-summary(precipGap)
-abline(precipGap)
-abline(0,1, col="red")
-
-ggplot(weatherDay, aes(PRCP, Precip))+
-  geom_point()
 # gap fill missing station with westmoreland
 weatherDay$Precip_gap <- ifelse(is.na(weatherDay$Precip7),weatherDay$PRCP,weatherDay$Precip7)
 
+weatherDay <- left_join(weatherDay, rome, by=c("year","doy"))
+
+# Westmoreland to precip station
+precipGap <- lm(weatherDay$Precip7 ~ weatherDay$PRCP)
+plot(weatherDay$PRCP, weatherDay$Precip7, pch=19)
+summary(precipGap)
+abline(precipGap)
+abline(0,1, col="red")
+# Rome to precip station
+precipGap2 <- lm(weatherDay$Precip ~ weatherDay$rome_precip)
+plot(weatherDay$rome_precip, weatherDay$Precip, pch=19)
+summary(precipGap2)
+abline(precipGap2)
+abline(0,1, col="red")
+
+# record rain on snow
+weatherDay$rain_snow <- ifelse(weatherDay$rome_rain_ID == 1 & weatherDay$SNWD > 0 &weatherDay$Precip_gap > 1,1,0  )
+
+#westmoreland vs weather station
+ggplot(weatherDay, aes(Precip7, PRCP))+
+  geom_point()
+ggplot(weatherDay, aes(Precip, rome_precip))+
+  geom_point()
 
 rm(list=setdiff(ls(),c("tomst25","weatherDay","atmosHourly","compID","dirComp")))
