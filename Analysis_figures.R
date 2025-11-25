@@ -122,7 +122,7 @@ soilMet <- left_join(soilMet, freezeJoin, by=c("location","year","doy"))
 soilMet$VWC_gap <- ifelse(soilMet$freezeSoil == 1, soilMet$lastVWC, soilMet$SWC_12)
 # use water year starting Oct 1 2023
 soilDat <- soilMet %>%
-  filter(DD>=2023.747)
+  filter(DD>=2022.747)
 
 soilDat$locID <- ifelse(soilDat$location == "maple-beech", 1, #Deciduous forest
                   ifelse(soilDat$location == "hemlock sapflow", 2, #Conifer-deciduous forest
@@ -168,11 +168,11 @@ locColorst <- c(rgb(93,168,153,100, maxColorValue = 255),
 singleLoc <- soilDat %>%
   filter(location == "hemlock sapflow")
 
-wd <- 45
-hd <- 10
+wd <- 50
+hd <- 15
 
 # x range
-xl <- 2023.74
+xl <- 2022.74
 xh <- 2025.76
 #y range for meteorological graph
 #air temp and precipitation
@@ -184,7 +184,28 @@ prMax <- 60
 #surface temp
 yl2 <- -20
 yh2 <- 30
+#snow depth max (mm)
 snMax <- 650
+
+yl3 <- -5
+yh3 <- 25
+
+yl4 <- 0
+yh4 <- 0.65
+
+#sizing for lines of graph
+lw <- 3
+
+# axes label sequences
+yxAT <- seq(-20,30, by=10)
+
+# axis sizing
+cx_tick <- 2
+# line for y axis tick labels
+lyax <- 3
+#sizing for y axis tick labels
+cll <- 2
+
 
 
 precipRescale <- function(x,precipMax,ylf,yhf) {
@@ -193,7 +214,9 @@ precipRescale <- function(x,precipMax,ylf,yhf) {
 precipRescale(10,prMax,yl,yh)
 
 
-png(paste0(plotDir,"/daily_data.png"), width = 60, height = 50, units = "cm", res=300)
+
+
+png(paste0(plotDir,"/daily_data.png"), width = 65, height = 70, units = "cm", res=300)
 layout(matrix(c(1,2,3,4),ncol=1), width=lcm(wd),height=rep(lcm(hd),4))
 #air temp and precip
 par(mai=c(0.25,0,0,0))
@@ -210,9 +233,9 @@ for(i in 1:nrow(singleLoc)){
             precipRescale(0,prMax,yl,yh)),
           col="lightskyblue2", border=NA)
 }
-points(singleLoc$DD, singleLoc$aveT, type="l", pch=19)
-axis(1, seq(2023,2026))
-
+points(singleLoc$DD, singleLoc$aveT, type="l", pch=19, lwd=lw )
+axis(2, yxAT, rep("", length(yxAT)), cex=cx_tick)
+mtext(yxAT, side=2, at=yxAT, line = lyax, cex=cll, las=2)
 
 # above surface temp and snow
 par(mai=c(0.25,0,0,0))
@@ -229,21 +252,36 @@ for(i in 1:nrow(singleLoc)){
           col="grey75", border=NA)
 }
 
-
+legend("topleft", locLabel, col=locColor, lty=1, lwd=1, bty="n", cex=0.75)
 for(i in 1:5){
   points(soilDat$DD[soilDat$locID==i],soilDat$Tsurf_15[soilDat$locID==i],
-         type="l", col=locColor[i])
+         type="l", col=locColor[i], lwd=lw )
 }
 
 
 # soil temp
 par(mai=c(0.25,0,0,0))
-plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
+plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl3,yh3), xaxs="i",yaxs="i",
      xlab= " ", ylab=" ", axes=FALSE)
+abline(h=0)
+legend("topleft", locLabel, col=locColor, lty=1, lwd=1, bty="n", cex=0.75)
+for(i in 1:5){
+  points(soilDat$DD[soilDat$locID==i],soilDat$Tsoil_6[soilDat$locID==i],
+         type="l", col=locColor[i], lwd=lw )
+}
+
+
 #soil moisture
 
 par(mai=c(0.25,0,0,0))
-plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
+plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl4,yh4), xaxs="i",yaxs="i",
      xlab= " ", ylab=" ", axes=FALSE)
+
+legend("bottomleft", locLabel, col=locColor, lty=1, lwd=1, bty="n", cex=0.75)
+for(i in 1:5){
+  points(soilDat$DD[soilDat$locID==i],soilDat$VWC_gap[soilDat$locID==i],
+         type="l", col=locColor[i], lwd=lw )
+}
+axis(1, seq(2023,2026))
 
 dev.off()
