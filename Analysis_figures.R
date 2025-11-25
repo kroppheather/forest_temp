@@ -168,6 +168,9 @@ locColorst <- c(rgb(93,168,153,100, maxColorValue = 255),
 singleLoc <- soilDat %>%
   filter(location == "hemlock sapflow")
 
+rainsnow <- singleLoc %>%
+  filter(rain_snow == 1)
+
 wd <- 50
 hd <- 15
 
@@ -198,6 +201,9 @@ lw <- 3
 
 # axes label sequences
 yxAT <- seq(-20,30, by=10)
+yxSuT <- seq(-20,30, by=10)
+yxSoT <- seq(-5,25, by=5)
+yxSW <- seq(0,0.6, by=0.1)
 
 # axis sizing
 cx_tick <- 2
@@ -257,6 +263,8 @@ for(i in 1:5){
   points(soilDat$DD[soilDat$locID==i],soilDat$Tsurf_15[soilDat$locID==i],
          type="l", col=locColor[i], lwd=lw )
 }
+
+text(rainsnow$DD, rep(25,length(rainsnow$DD)), "*")
 
 
 # soil temp
