@@ -124,6 +124,12 @@ soilMet$VWC_gap <- ifelse(soilMet$freezeSoil == 1, soilMet$lastVWC, soilMet$SWC_
 soilDat <- soilMet %>%
   filter(DD>=2023.747)
 
+soilDat$locID <- ifelse(soilDat$location == "maple-beech", 1, #Deciduous forest
+                  ifelse(soilDat$location == "hemlock sapflow", 2, #Conifer-deciduous forest
+                  ifelse(soilDat$location == "Spruce RG09", 3, #Conifer monoculture
+                  ifelse(soilDat$location == "Buckthorn RG03", 4, #Invasive scrub
+                  ifelse(soilDat$location == "Rogers reforestation", 5,NA))))) #Reforestation field
+
 # count up how many missing gap filled precip observations
 weatherDay$DD <- weatherDay$year + ((weatherDay$doy-1)/ifelse(leap_year(weatherDay$year),366,365))
 PrecipCount <- weatherDay %>%
@@ -139,7 +145,23 @@ PrecipCount <- weatherDay %>%
 
 
 ######## color scheme for figures ----
+locLabel <- c("Deciduous forest",
+              "Conifer-deciduous forest",
+              "Conifer monoculture",
+              "Invasive scrub",
+              "Reforestation field")
 
+locColor <- c(rgb(93,168,153, maxColorValue = 255),
+              rgb(51,117,56, maxColorValue = 255),
+              rgb(148,203,236, maxColorValue = 255),
+              rgb(194,106,119, maxColorValue = 255),
+              rgb(220,205,125, maxColorValue = 255))
+
+locColorst <- c(rgb(93,168,153,100, maxColorValue = 255),
+              rgb(51,117,56,100, maxColorValue = 255),
+              rgb(148,203,236,100, maxColorValue = 255),
+              rgb(194,106,119,100, maxColorValue = 255),
+              rgb(220,205,125,100, maxColorValue = 255))
 
 
 ####### Figure 1: Met and soil data ----
@@ -158,6 +180,11 @@ yl <- -20
 yh <- 30
 #precip in mm
 prMax <- 60
+
+#surface temp
+yl2 <- -20
+yh2 <- 30
+snMax <- 650
 
 
 precipRescale <- function(x,precipMax,ylf,yhf) {
@@ -189,8 +216,26 @@ axis(1, seq(2023,2026))
 
 # above surface temp and snow
 par(mai=c(0.25,0,0,0))
-plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
+plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
      xlab= " ", ylab=" ", axes=FALSE)
+
+for(i in 1:nrow(singleLoc)){
+  polygon(c(singleLoc$DD[i]-0.001,singleLoc$DD[i]-0.001,
+            singleLoc$DD[i]+0.001,singleLoc$DD[i]+0.001),
+          c(precipRescale(0,snMax,yl2,yh2),
+            precipRescale(singleLoc$SNWD[i],snMax,yl2,yh2),
+            precipRescale(singleLoc$SNWD[i],snMax,yl2,yh2),
+            precipRescale(0,snMax,yl2,yh2)),
+          col="grey75", border=NA)
+}
+
+
+for(i in 1:5){
+  points(soilDat$DD[soilDat$locID==i],soilDat$Tsurf_15[soilDat$locID==i],
+         type="l", col=locColor[i])
+}
+
+
 # soil temp
 par(mai=c(0.25,0,0,0))
 plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
