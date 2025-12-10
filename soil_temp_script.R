@@ -121,4 +121,4 @@ soilDat$locID <- ifelse(soilDat$location == "maple-beech", 1, #Deciduous forest
                                       ifelse(soilDat$location == "Buckthorn RG03", 4, #Invasive scrub
                                              ifelse(soilDat$location == "Rogers reforestation", 5,NA))))) #Reforestation field
 
-soilDat$freezeModID <- ifelse(soilDat$)
+soilDat$freezeModID <- ifelse(soilDat$aveT <=0, 1,0)
