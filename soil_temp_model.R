@@ -6,7 +6,7 @@ model{
     # likelihood for soil temp
     s_temp[i] ~ dnorm(mu_temp[i], tau_temp[modforestID[i]])
     rep_temp[i] ~ dnorm(mu_temp[i], tau_temp[modforestID[i]])
-    mu_temp[i] <- beta[1,modforestID[i]]+beta[2,modIDforestID[i]]*air_temp[i]+beta[3,modIDforestID[i]]*SWC[i]
+    mu_temp[i] <- beta[1,forestID[i]]+beta[2,modforestID[i]]*air_temp[i]+beta[3,modforestID[i]]*SWC[i]
   }
   
   #################################

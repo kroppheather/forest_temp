@@ -119,6 +119,28 @@ soilDat$locID <- ifelse(soilDat$location == "maple-beech", 1, #Deciduous forest
                         ifelse(soilDat$location == "hemlock sapflow", 2, #Conifer-deciduous forest
                                ifelse(soilDat$location == "Spruce RG09", 3, #Conifer monoculture
                                       ifelse(soilDat$location == "Buckthorn RG03", 4, #Invasive scrub
-                                             ifelse(soilDat$location == "Rogers reforestation", 5,NA))))) #Reforestation field
+                                        ifelse(soilDat$location == "Rogers reforestation", 5,NA))))) #Reforestation field
 
-soilDat$freezeModID <- ifelse(soilDat$aveT <=0, 1,0)
+#remove observations with missing air temp
+
+soilMod <- soilDat %>%
+  filter(is.na(aveT) == FALSE)
+# create ID for time periods below freezing
+soilMod$freezeModID <- ifelse(soilMod$aveT <= 0, 1,2) # 1 below or at freezing
+# create ID for forest type and freezing time period
+soilMod$modforestID <- ifelse(soilMod$freezeModID == 1, soilMod$locID,
+                              soilMod$locID+5)
+
+# create ID table
+soilIDs <- soilMod %>%
+  ungroup %>%
+  select(location, locID, freezeModID, modforestID) %>%
+  distinct()
+############### set up model ---------
+# data
+dataList <- list(Nobs= nrow(soilMod),
+                 s_temp = soilMod$Tsoil_6,
+                 modforestID = soilMod$modforestID,
+                 forestID = soilMod$locID,
+                 air_temp = soilMod$aveT)
+
