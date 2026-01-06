@@ -142,5 +142,10 @@ dataList <- list(Nobs= nrow(soilMod),
                  s_temp = soilMod$Tsoil_6,
                  modforestID = soilMod$modforestID,
                  forestID = soilMod$locID,
-                 air_temp = soilMod$aveT)
+                 air_temp = soilMod$aveT,
+                 SWC = soilMod$VWC_gap,
+                 Nmodforest = nrow(soilIDs),
+                 Nparm=3)
+
+
 
