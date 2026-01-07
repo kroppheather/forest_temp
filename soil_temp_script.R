@@ -177,7 +177,7 @@ temp_mod <- jags.model(file="/Users/hkropp/Documents/GitHub/forest_temp/soil_tem
                                             data=dataList, inits=inits,
                                             n.adapt=10000,
                                            n.chains=3)
-temp_sample <- coda.samples(gc_modB, variable.names=parms, n.iter=90000, thin=30)
+temp_sample <- coda.samples(temp_mod, variable.names=parms, n.iter=90000, thin=30)
 
 MCMCtrace(temp_sample, params=c("sig_temp","beta_naught", "beta"),
                      pdf=TRUE, 
