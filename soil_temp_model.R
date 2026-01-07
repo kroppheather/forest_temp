@@ -6,7 +6,7 @@ model{
     # likelihood for soil temp
     s_temp[i] ~ dnorm(mu_temp[i], tau_temp[modforestID[i]])
     rep_temp[i] ~ dnorm(mu_temp[i], tau_temp[modforestID[i]])
-    mu_temp[i] <- beta[1,forestID[i]]+beta[2,modforestID[i]]*air_temp[i]+beta[3,modforestID[i]]*SWC[i]
+    mu_temp[i] <- beta_naught[forestID[i]]+beta[1,modforestID[i]]*air_temp[i]+beta[2,modforestID[i]]*SWC[i]
   }
   
   #################################
@@ -17,13 +17,19 @@ model{
   
   for(j in 1:Nmodforest){
     tau_temp[j] <- pow(sig_temp[j],-2)
-    sig_temp ~ dunif(0,1000)
+    sig_temp[j] ~ dunif(0,1000)
     
   }
   
   # reg parm
-  for(k in 1:Nparm){
-   for(j in 1:Nmodforest){
+ 
+   for(j in 1:Nforest){
+     beta_naught[j] ~ dnorm(0,0.0001)
+   }
+  
+  
+    for(j in 1:Nmodforest){
+     for(k in 1:Nparm){
      beta[k,j] ~ dnorm(0,0.0001)
     }
    }

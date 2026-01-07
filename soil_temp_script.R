@@ -136,6 +136,12 @@ soilIDs <- soilMod %>%
   ungroup %>%
   select(location, locID, freezeModID, modforestID) %>%
   distinct()
+
+soilCheck <- soilMod %>%
+  filter(modforestID == 6)
+
+ggplot(soilCheck, aes(aveT, Tsoil_6))+
+  geom_point()
 ############### set up model ---------
 # data
 dataList <- list(Nobs= nrow(soilMod),
@@ -145,7 +151,35 @@ dataList <- list(Nobs= nrow(soilMod),
                  air_temp = soilMod$aveT,
                  SWC = soilMod$VWC_gap,
                  Nmodforest = nrow(soilIDs),
-                 Nparm=3)
+                 Nparm=2,
+                 Nforest=5)
+
+parms <- c("sig_temp"," beta_naught","beta","rep_temp")
+
+inits <- list(list(sig_temp = rep(1,nrow(soilIDs)),
+                   beta_naught= rep(0,5),
+                   beta=matrix(c(
+                          rep(0,10),
+                          rep(0,10)), nrow=2, byrow=TRUE)),
+              list(sig_temp = rep(5,nrow(soilIDs)),
+                   beta_naught = rep(1,5),
+                   beta=matrix(c(
+                                 rep(-1,10),
+                                 rep(-1,10)), nrow=2, byrow=TRUE)),
+              list(sig_temp = rep(3,nrow(soilIDs)),
+                   beta_naught=rep(2,5),
+                     beta=matrix(c(
+                                 rep(1,10),
+                                 rep(1,10)), nrow=2, byrow=TRUE)))
 
 
+temp_mod <- jags.model(file="/Users/hkropp/Documents/GitHub/forest_temp/soil_temp_model.r",
+                                            data=dataList, inits=inits,
+                                            n.adapt=10000,
+                                           n.chains=3)
+temp_sample <- coda.samples(gc_modB, variable.names=parms, n.iter=90000, thin=30)
 
+MCMCtrace(temp_sample, params=c("sig_temp","beta_naught", "beta"),
+                     pdf=TRUE, 
+                    wd="/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model",
+                     filename="temp_model.pdf")
