@@ -144,6 +144,23 @@ PrecipCount <- weatherDay %>%
 ######## organize for model ----
 
 
+
+
+soilMod <- soilDat %>%
+  filter(is.na(aveT) == FALSE)
+# create ID for time periods below freezing
+soilMod$freezeModID <- ifelse(soilMod$aveT <= 0, 1,2) # 1 below or at freezing
+# create ID for forest type and freezing time period
+soilMod$modforestID <- ifelse(soilMod$freezeModID == 1, soilMod$locID,
+                              soilMod$locID+5)
+
+# create ID table
+soilIDs <- soilMod %>%
+  ungroup %>%
+  select(location, locID, freezeModID, modforestID) %>%
+  distinct()%>%
+  arrange(modforestID)
+
 ######## color scheme for figures ----
 locLabel <- c("Deciduous forest",
               "Conifer-deciduous forest",
@@ -193,36 +210,59 @@ snMax <- 650
 yl3 <- -5
 yh3 <- 25
 
-yl4 <- 0
+yl4 <- 0.05
 yh4 <- 0.65
 
 #sizing for lines of graph
-lw <- 3
+lw <- 5
 
 # axes label sequences
-yxAT <- seq(-20,30, by=10)
-yxSuT <- seq(-20,30, by=10)
+yxAT <- seq(-15,25, by=10)
+yxSuT <- seq(-15,25, by=10)
 yxSoT <- seq(-5,25, by=5)
 yxSW <- seq(0,0.6, by=0.1)
-
+yxPR <- seq(0,50, by=10)
+yxSN <- seq(0,600, by=100)
 # axis sizing
-cx_tick <- 2
+cx_tick <- 4
 # line for y axis tick labels
-lyax <- 3
+lyax <- 4
+# line for first label 
+lly1 <-18
+lly2 <- 11
+lly3 <- 14
+lly4 <- 19
 #sizing for y axis tick labels
-cll <- 2
+cll <- 3
+labll <- 4
 
+monthseq <- c(1,32,60,91,121,152,182,213,244,274,305,335)
+monthseqL <- c(1,32,61,92,122,153,183,214,245,275,306,336)
+monthLab <- c("J","F","M","A","M","J","J","A","S","O","N","D")
 
+months <- c(c(274,305,335),monthseq,monthseqL,  c(1,32,60,91,121,152,182,213,244))
+monthsLab <- c(c("O","N","D"),monthLab, monthLab,c("J","F","M","A","M","J","J","A","S"))
+years <- c(rep(2022,3), rep(2023,12),rep(2024,12),rep(2025,9))
+monthseq <- ifelse(leap_year(years), (months-1)/366,(months-1)/365)
+monthDD <- years+monthseq
 
 precipRescale <- function(x,precipMax,ylf,yhf) {
   (((yhf-ylf)/precipMax)*x)+ylf
 }
 precipRescale(10,prMax,yl,yh)
 
+# legend size 
+lgcx = 4
+
+# text 
+xp <- 2022.8
+# panel letter size
+plcx <- 5
 
 
 
-png(paste0(plotDir,"/daily_data.png"), width = 65, height = 70, units = "cm", res=300)
+
+png(paste0(plotDir,"/daily_data.png"), width = 67, height = 70, units = "cm", res=300)
 layout(matrix(c(1,2,3,4),ncol=1), width=lcm(wd),height=rep(lcm(hd),4))
 #air temp and precip
 par(mai=c(0.25,0,0,0))
@@ -240,9 +280,19 @@ for(i in 1:nrow(singleLoc)){
           col="lightskyblue2", border=NA)
 }
 points(singleLoc$DD, singleLoc$aveT, type="l", pch=19, lwd=lw )
-axis(2, yxAT, rep("", length(yxAT)), cex=cx_tick)
+axis(2, c(-30,yxAT,40), rep("", length(yxAT)+2), cex=cx_tick)
 mtext(yxAT, side=2, at=yxAT, line = lyax, cex=cll, las=2)
+axis(4,  precipRescale(yxPR,prMax,yl,yh), rep("", length(yxPR)), cex=cx_tick)
+mtext(yxPR, side=4, at=precipRescale(yxPR,prMax,yl,yh), line = lyax, cex=cll, las=2)
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+mtext("Air temperature", side=2, line=lly1, cex=labll, )
+mtext(expression(paste("(",degree,"C)")), side=2, line=lly2, cex=labll)
 
+mtext("Precipitation", side=4, line=lly3, cex=labll)
+mtext("(mm)", side=4, line=lly4, cex=labll)
+legend(2024.25,33, c("temperature", "precipitation"), col=c("black","lightskyblue2"), lwd=c(lw,NA), pch=c(NA,15),
+       bty="n", horiz=TRUE, cex=lgcx)
+text(xp, 27, "A", cex=plcx)
 # above surface temp and snow
 par(mai=c(0.25,0,0,0))
 plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
@@ -258,38 +308,64 @@ for(i in 1:nrow(singleLoc)){
           col="grey75", border=NA)
 }
 
-legend("topleft", locLabel, col=locColor, lty=1, lwd=1, bty="n", cex=0.75)
+
+
 for(i in 1:5){
   points(soilDat$DD[soilDat$locID==i],soilDat$Tsurf_15[soilDat$locID==i],
          type="l", col=locColor[i], lwd=lw )
 }
+abline(h=0)
+#text(rainsnow$DD, rep(25,length(rainsnow$DD)), "*")
+axis(2, c(-30,yxSuT,40), rep("", length(yxSuT)+2), cex=cx_tick)
+mtext(yxSuT, side=2, at=yxSuT, line = lyax, cex=cll, las=2)
+axis(4,  precipRescale(yxSN,snMax,yl2,yh2), rep("", length(yxSN)), cex=cx_tick)
+mtext(yxSN, side=4, at=precipRescale(yxSN,snMax,yl2,yh2), line = lyax, cex=cll, las=2)
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+mtext("Surface temperature", side=2, line=lly1, cex=labll)
+mtext(expression(paste("(",degree,"C)")), side=2, line=lly2, cex=labll)
 
-text(rainsnow$DD, rep(25,length(rainsnow$DD)), "*")
-
-
+mtext("Snow depth", side=4, line=lly3, cex=labll)
+mtext("(mm)", side=4, line=lly4, cex=labll)
+legend(2024.25,33, c( "snow depth"), col=c("grey75"), pch=15,
+       bty="n", horiz=TRUE, cex=lgcx)
+text(xp, 27, "B", cex=plcx)
 # soil temp
 par(mai=c(0.25,0,0,0))
 plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl3,yh3), xaxs="i",yaxs="i",
      xlab= " ", ylab=" ", axes=FALSE)
 abline(h=0)
-legend("topleft", locLabel, col=locColor, lty=1, lwd=1, bty="n", cex=0.75)
+
+
 for(i in 1:5){
   points(soilDat$DD[soilDat$locID==i],soilDat$Tsoil_6[soilDat$locID==i],
          type="l", col=locColor[i], lwd=lw )
 }
-
-
+axis(2, c(-30,yxSoT,40), rep("", length(yxSoT)+2), cex=cx_tick)
+mtext(yxSoT, side=2, at=yxSoT, line = lyax, cex=cll, las=2)
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+mtext("Soil temperature", side=2, line=lly1, cex=labll)
+mtext(expression(paste("(", degree,"C)")), side=2, line=lly2, cex=labll)
+text(xp, 23, "C", cex=plcx)
 #soil moisture
 
 par(mai=c(0.25,0,0,0))
 plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl4,yh4), xaxs="i",yaxs="i",
      xlab= " ", ylab=" ", axes=FALSE)
 
-legend("bottomleft", locLabel, col=locColor, lty=1, lwd=1, bty="n", cex=0.75)
+legend(2022.9,0.66, locLabel[1:2], col=locColor[1:2], lty=1, lwd=lw, bty="n", cex=lgcx)
+legend(2023.9,0.66, locLabel[3:4], col=locColor[3:4], lty=1, lwd=lw, bty="n", cex=lgcx)
+legend(2024.9,0.66, locLabel[5], col=locColor[5], lty=1, lwd=lw, bty="n", cex=lgcx)
 for(i in 1:5){
   points(soilDat$DD[soilDat$locID==i],soilDat$VWC_gap[soilDat$locID==i],
          type="l", col=locColor[i], lwd=lw )
 }
-axis(1, seq(2023,2026))
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+mtext(monthsLab, side=1, at=monthDD, line = lyax, cex=cll)
+mtext(seq(2023,2025), side=1, at=seq(2023,2025), line = lyax+5, cex=cll+1, adj=0)
 
+axis(2, c(-1,yxSW,1), rep("", length(yxSW)+2), cex=cx_tick)
+mtext(yxSW, side=2, at=yxSW, line = lyax, cex=cll, las=2)
+mtext("Soil moisture", side=2, line=lly1, cex=labll)
+mtext(expression(paste("(m"^3,"m"^-3,")")), side=2, line=lly2, cex=labll)
+text(xp, 0.6, "D", cex=plcx)
 dev.off()
