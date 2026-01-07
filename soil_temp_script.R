@@ -183,3 +183,34 @@ MCMCtrace(temp_sample, params=c("sig_temp","beta_naught", "beta"),
                      pdf=TRUE, 
                     wd="/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model",
                      filename="temp_model.pdf")
+beta_n_out <- MCMCsummary(temp_sample,params=c( "beta_naught"))
+beta_out <- MCMCsummary(temp_sample,params=c( "beta"))
+beta_out
+beta_out$p_name <- row.names(beta_out)
+beta_out$modforestID <- rep(seq(1,10), each=2)
+beta_out$parmID <- rep(seq(1,2), times=10)
+air_slope <- beta_out %>%
+  filter(parmID == 1)
+swc_slope <- beta_out %>%
+  filter(parmID == 2)
+sig_out <- MCMCsummary(temp_sample,params=c( "sig_temp"))
+rep_temp <- MCMCsummary(temp_sample,params=c( "rep_temp"))
+
+
+model_comp <- data.frame(actual_temp = soilMod$Tsoil_6,
+                        predicted_temp = rep_temp$mean )
+
+plot(model_comp$actual_temp, model_comp$predicted_temp)
+mod_eval <- lm(model_comp$predicted_temp ~ model_comp$actual_temp)
+summary(mod_eval)
+
+write.csv(beta_n_out, 
+            "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/beta_n_out.csv")
+write.csv(air_slope, 
+          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/air_slope.csv")
+write.csv(swc_slope, 
+          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/swc_slope.csv")
+write.csv(sig_out, 
+          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/sig_out.csv")
+write.csv(rep_temp, 
+          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/rep_out.csv")
