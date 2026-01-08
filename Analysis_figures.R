@@ -23,6 +23,14 @@ source("/Users/hkropp/Documents/GitHub/forest_temp/weather.r")
 
 plotDir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/data_analysis"
 
+
+##### read in additional site and canopy data ----
+
+
+SpeciesInfo <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/canopy/speciesID.csv")
+forestInventory <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/canopy/HCEF forest inventory data 25.csv")
+
+
 ##### aggregate all data to daily level and join with weather ----
 
 tomstDay <- tomst25
@@ -369,3 +377,85 @@ mtext("Soil moisture", side=2, line=lly1, cex=labll)
 mtext(expression(paste("(m"^3,"m"^-3,")")), side=2, line=lly2, cex=labll)
 text(xp, 0.6, "D", cex=plcx)
 dev.off()
+
+
+####### Table 1: Site data ----
+# calcuate stand basal area and dominant species
+forestInventory$tree_area.m2 <- (((forestInventory$DBH.cm / 2)^2) * pi/10000) 
+FI <- forestInventory %>%
+  filter(Dead == "N", DBH.cm >3 ) %>%
+  filter(Species != "CEOR") %>%
+  filter(Species != "VITIS") %>% # remove vines from dbh calcs
+  group_by(Plot, Species) %>%
+  summarise(totArea = sum(tree_area.m2,na.rm=TRUE),
+            ncount = n(),
+            aveDBH = mean(DBH.cm,na.rm=TRUE))
+
+TotBA <- FI %>%
+  group_by(Plot) %>%
+  summarise(totBA = sum(totArea))
+#forest plot area
+PA_ha <- (15^2*pi)/10000          
+TotBA$BA_m2_ha <- TotBA$totBA/PA_ha 
+
+plotStudy <- c("RG01","RG25","RG09","RG03")
+
+PlotTable <- TotBA %>%
+  filter(Plot %in% plotStudy)
+
+
+
+FITot <-  forestInventory %>%
+  filter(Dead == "N", DBH.cm >3 ) %>%
+  filter(Species != "CEOR") %>%
+  filter(Species != "VITIS") %>% # remove vines from dbh calcs
+  group_by(Plot) %>%
+  summarise(totArea = sum(tree_area.cm2,na.rm=TRUE),
+            ncount = n(),
+            aveDBH = mean(DBH.cm,na.rm=TRUE))
+
+FIjoin <- left_join(FI,FITot, by="Plot")
+FIjoin$PercBA <- (FIjoin$totArea.x/FIjoin$totArea.y)*100  
+
+
+FItop <- FIjoin %>%
+  filter(PercBA > 5)
+
+PlotSpec <- FItop %>%
+  select(Species,Plot, PercBA)
+
+plotsI <- unique(PlotSpec$Plot)
+
+PlotComp <- left_join(PlotSpec, SpeciesInfo, by=c("Species"="Code"))
+
+NameSub <- character()
+for(i in 1:nrow(PlotComp)){
+  NameSub[i] <- paste0(substr(strsplit(PlotComp$Species.y[i], " ")[[1]][1],1,1), ". ",
+                       strsplit(PlotComp$Species.y[i], " ")[[1]][2])
+}
+
+PlotComp$NameSub <- NameSub
+PlotComp$Name <- ifelse(PlotComp$Genus =="Malus", "Malus sp.", PlotComp$NameSub ) 
+
+PlotComp <- PlotComp %>%
+  arrange(desc(PercBA))
+PlotComp[PlotComp$Plot == "RG03",]
+
+pasteSub <- character()
+namecomp <- character()
+namePerc <- character()
+
+for(i in 1:length(plotsI)){
+  
+  pasteSub <- PlotComp$Name[PlotComp$Plot == plotsI[i]]
+  percSub <-  paste0(pasteSub, "(",round(PlotComp$PercBA[PlotComp$Plot == plotsI[i]],0),")")
+  namecomp[i] <- paste(pasteSub,  collapse = ", ")
+  namePerc[i] <- paste(percSub,  collapse = ", ")
+}
+namecomp
+namePerc
+
+SpeciesTable <- data.frame(Plot = plotsI,
+                           composition = namePerc)
+
+PlotTable <- left_join(PlotTable, SpeciesTable, by="Plot")
