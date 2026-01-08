@@ -30,6 +30,8 @@ plotDir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/M
 SpeciesInfo <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/canopy/speciesID.csv")
 forestInventory <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/canopy/HCEF forest inventory data 25.csv")
 
+# model output index 
+modDir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model"
 
 ##### aggregate all data to daily level and join with weather ----
 
@@ -463,6 +465,18 @@ PlotTable <- left_join(PlotTable, SpeciesTable, by="Plot")
 
 
 ####### Figure : temperature model and patterns ----
+beta_n <- read.csv(paste0(modDir, "/beta_n_out.csv"))
+beta_air <- read.csv(paste0(modDir, "/air_slope.csv"))
+beta_swc <- read.csv(paste0(modDir, "/swc_slope.csv"))
+# for plotting: predicted mu with CI
+mu_temp_freeze_50 <- read.csv(paste0(modDir, "/mu_temp_freeze_50.csv"))
+
+wd <- 6
+hd <- 6
+
+png(paste0(plotDir,"/daily_data.png"), width = 10, height = 50, units = "cm", res=300)
+layout(matrix(c(1,2,3,4,5),ncol=1), width=lcm(wd),height=rep(lcm(hd),5))
 
 
+dev.off()
 
