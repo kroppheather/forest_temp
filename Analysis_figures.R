@@ -380,7 +380,7 @@ dev.off()
 
 
 ####### Table 1: Site data ----
-# calcuate stand basal area and dominant species
+# calculate stand basal area and dominant species
 forestInventory$tree_area.m2 <- (((forestInventory$DBH.cm / 2)^2) * pi/10000) 
 FI <- forestInventory %>%
   filter(Dead == "N", DBH.cm >3 ) %>%
@@ -459,3 +459,10 @@ SpeciesTable <- data.frame(Plot = plotsI,
                            composition = namePerc)
 
 PlotTable <- left_join(PlotTable, SpeciesTable, by="Plot")
+
+
+
+####### Figure : temperature model and patterns ----
+
+
+
