@@ -594,5 +594,35 @@ ggplot(tomst25, aes(DD, SWC_12, color=location))+
 ggplot(tomst25 %>% filter(year == 2025), aes(DD, SWC, color=location))+
   geom_line()
 
+# export data for teaching exercise
+weatherStation <- tomstHour %>%
+  filter(location == "weather station")
+weatherStation$date <- as.Date(weatherStation $doy-1, origin = paste0(weatherStation$year,"-01-01"))
+weatherStation$Timestamp <- paste0(weatherStation$date, " ", weatherStation$hour,":00")
+weatherAct <- weatherStation %>%
+  ungroup() %>%
+  select(Timestamp, Tsoil6, Tsurf15, SWC)
+
+# 2021_03
+soilOut1 <- weatherAct[1:2536,]
+# 2021_06
+soilOut2 <- weatherAct[2537:4747,]
+# 2021_11
+soilOut3 <- weatherAct[4748:8488,]
+# 2022_03
+soilOut4 <- weatherAct[8489:10670,]
+#2022_07
+soilOut5 <- weatherAct[10671:13889,]
+#2022_10
+soilOut6 <- weatherAct[13890:15924,]
+#2023_09
+soilOut7 <- weatherAct[15925:21286,]
+
+write.csv(soilOut7,
+        paste0( "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/teaching/2026/Spring 2026/EnvDataSci/activities/data/activity04/soil/",
+                "soil_data_2023_09.csv"), row.names=FALSE)
+
 rm(list=setdiff(ls(),c("tomst25","dirComp","compID")))
+
+
 
