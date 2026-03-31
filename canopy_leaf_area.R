@@ -2,6 +2,7 @@
 library(dplyr)
 library(ggplot2)
 library(lubridate)
+library(MetBrewer)
 ############## read in data ----
 c_dir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/canopy"
 canopyLAI <- read.csv(paste0(c_dir,"/canopy_lai_all.csv"))
@@ -31,6 +32,24 @@ canopySoil_24 <- left_join(canopySoil24, plot_type[,1:2], by=c("site_id"="Plots"
 
 ggplot(canopySoil_24, aes(x=as.factor(dateF), PAR_LAI, fill=Current_type))+
   geom_boxplot()
+
+canopySoil_24$doy <- yday(canopySoil_24$dateF)
+
+LAI24 <- canopySoil_24 %>%
+  group_by(dateF, doy, Current_type,site_id) %>%
+  summarize(LAI_mean=mean(PAR_LAI, na.rm=TRUE),
+            LAI_sd=sd(PAR_LAI, na.rm=TRUE),
+            LAI_n=n())
+LAI24$se <- LAI24$LAI_sd/sqrt(LAI24$LAI_n)
+
+ggplot(LAI24, aes(x=dateF, y=LAI_mean,  color=Current_type))+
+  geom_point()+
+  geom_linerange(data=LAI24, aes(x=dateF, ymin=LAI_mean-se,ymax=LAI_mean+se))+
+  theme_classic(base_size=18)+
+  labs(x="Date",y=expression(paste("Leaf area index (m"^2,""[leaf], " m"^-2,""[ground],")")),
+       color="Forest type")+
+  scale_color_met_d("Degas")
+
 
 maxOut <- canopyLAI %>%
   filter( month<= 8 )
