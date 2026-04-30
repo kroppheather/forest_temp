@@ -380,7 +380,7 @@ mtext(expression(paste("(m"^3,"m"^-3,")")), side=2, line=lly2, cex=labll)
 text(xp, 0.6, "D", cex=plcx)
 dev.off()
 
-
+### examples
 ####### Table 1: Site data ----
 # calculate stand basal area and dominant species
 forestInventory$tree_area.m2 <- (((forestInventory$DBH.cm / 2)^2) * pi/10000) 
