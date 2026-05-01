@@ -41,6 +41,10 @@ dirT6 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/07_22_25")
 currentD7 <- "10-16-2025"
 dirT7 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/10_16_2025")
 
+# data downloaded in April
+currentD8 <- "04-24-2026"
+dirT8 <- paste0(dirComp[compID],"/Data/campus_weather/TOMST/04_24_2026")
+
 
 tomstF <- list.files(paste0(dirT))
 fileSN <- character()
@@ -467,6 +471,10 @@ for(i in 1:length(fileSNn7)){
 
 tail(datT7[[1]])
 
+refor_missing <- datT7[[13]]
+
+
+sensorInfoL7[[13]]$start_dateF[1] <- mdy("03-20-2025")
 
 for(i in 1:length(fileSNn7)){
   datT7[[i]]$location <- rep("omit",nrow(datT7[[i]]))
@@ -484,6 +492,72 @@ for(i in 1:length(fileSNn7)){
 }  
 
 
+
+
+# read in new data from D8
+
+
+tomstF8 <- list.files(paste0(dirT8))
+fileSN8 <- character()
+sensors8ID <- character()
+for(i in 1:length(tomstF8)){
+  fileSN8[i] <- as.numeric(strsplit(tomstF8, "_")[[i]][2])
+}
+fileSNn8 <- as.numeric(fileSN8)
+
+sensDF8 <- data.frame(sensor_sid = fileSNn8)
+
+sensors8 <- sensors %>% filter(end_date == "current")
+
+
+sensors8$start_dateF <- mdy("10-16-2025")
+
+sensors8$end_dateF <- mdy("04-23-2026")
+
+sensors8 <- inner_join(sensors8, sensDF8, by="sensor_sid")
+
+# read in files
+datT8 <- list()
+
+for(i in 1: length(fileSN8)){
+  datT8[[i]] <- read.csv(paste0(dirT8,"/",tomstF8[i]), sep=";",
+                         header=FALSE)[,1:9]
+  colnames(datT8[[i]])[1:9] <- c("record","date","tz","Tm6","T2","T15","SM","shake","errFlag")
+  datT8[[i]]$SN <- rep(fileSN8[i], nrow(datT8[[i]]))
+  
+  datT8[[i]]$dateF <- ymd_hm(datT8[[i]]$date) 
+  datT8[[i]]$estD <- with_tz(datT8[[i]]$dateF, tzone="America/New_York")
+}
+
+
+sensorInfoL8 <- list()
+
+for(i in 1:length(fileSNn8)){
+  sensorInfoL8[[i]] <- sensors8 %>%
+    filter(sensors8$sensor_sid == fileSNn8[i])
+  
+}
+
+tail(datT8[[1]])
+
+
+for(i in 1:length(fileSNn8)){
+  datT8[[i]]$location <- rep("omit",nrow(datT8[[i]]))
+  datT8[[i]]$Plot <- rep("omit",nrow(datT8[[i]]))
+  for(j in 1:nrow(sensorInfoL8[[i]])){
+    
+    datT8[[i]]$location <- ifelse(datT8[[i]]$estD > sensorInfoL8[[i]]$start_dateF[j] & 
+                                    datT8[[i]]$estD < sensorInfoL8[[i]]$end_dateF[j],
+                                  sensorInfoL8[[i]]$location[j],datT8[[i]]$location)
+    
+    datT8[[i]]$Plot <- ifelse(datT8[[i]]$estD > sensorInfoL8[[i]]$start_dateF[j] & 
+                                datT8[[i]]$estD < sensorInfoL8[[i]]$end_dateF[j],
+                              sensorInfoL8[[i]]$Plot.name[j],datT8[[i]]$Plot)
+  }
+}  
+
+
+
 # combine all data
 
 tomstUL <- do.call("rbind",datT)
@@ -494,7 +568,7 @@ tomstUL4 <- do.call("rbind",datT4)
 tomstUL5 <- do.call("rbind",datT5)
 tomstUL6 <- do.call("rbind",datT6)
 tomstUL7 <- do.call("rbind",datT7)
-
+tomstUL8 <- do.call("rbind",datT8)
 
 tomstp1 <- tomstUL %>%
   filter(location != "omit")
@@ -511,14 +585,16 @@ tomstp6 <- tomstUL6 %>%
   filter(location != "omit")
 tomstp7 <- tomstUL7 %>%
   filter(location != "omit")
-
+tomstp8 <- tomstUL8 %>%
+  filter(location != "omit")
 
 tomst1 <- rbind(tomstp1,tomstp2)
 tomst2 <- rbind(tomst1,tomstp3)
 tomst3 <- rbind(tomst2,tomstp4)
 tomst4 <- rbind(tomst3,tomstp5)
 tomst5 <- rbind(tomst4,tomstp6)
-tomst <- rbind(tomst5,tomstp7)
+tomst6 <- rbind(tomst5,tomstp7)
+tomst <- rbind(tomst6,tomstp8)
 
 tomst$Tm6 <- as.numeric(gsub("\\,","\\.", tomst$Tm6))
 tomst$T2 <- as.numeric(gsub("\\,","\\.", tomst$T2))
@@ -574,9 +650,8 @@ tomstDayLocation <- na.omit(tomstDay) %>%
             Tsurf_2sd = sd(Tsurf2),
             Tsurf_15sd = sd(Tsurf15),
             SWC_12sd = sd(SWC),
-            nobs = n())
-#%>% # view reforestation two sensors for now
-  #filter(nobs ==3)
+            nobs = n())%>%
+  filter(nobs ==3)
 tomstDayLocation$DD <- ifelse(leap_year(tomstDayLocation$year),((tomstDayLocation$doy-1)/366)+tomstDayLocation$year,
                               ((tomstDayLocation$doy-1)/365)+tomstDayLocation$year)
 
@@ -590,37 +665,9 @@ tomst25 <- tomstDayLocation %>%
 
 ggplot(tomst25, aes(DD, SWC_12, color=location))+
   geom_line()
-
-ggplot(tomst25 %>% filter(year == 2025), aes(DD, SWC, color=location))+
+ggplot(tomst25, aes(DD, Tsoil_6, color=location))+
   geom_line()
 
-# export data for teaching exercise
-weatherStation <- tomstHour %>%
-  filter(location == "weather station")
-weatherStation$date <- as.Date(weatherStation $doy-1, origin = paste0(weatherStation$year,"-01-01"))
-weatherStation$Timestamp <- paste0(weatherStation$date, " ", weatherStation$hour,":00")
-weatherAct <- weatherStation %>%
-  ungroup() %>%
-  select(Timestamp, Tsoil6, Tsurf15, SWC)
-
-# 2021_03
-soilOut1 <- weatherAct[1:2536,]
-# 2021_06
-soilOut2 <- weatherAct[2537:4747,]
-# 2021_11
-soilOut3 <- weatherAct[4748:8488,]
-# 2022_03
-soilOut4 <- weatherAct[8489:10670,]
-#2022_07
-soilOut5 <- weatherAct[10671:13889,]
-#2022_10
-soilOut6 <- weatherAct[13890:15924,]
-#2023_09
-soilOut7 <- weatherAct[15925:21286,]
-
-write.csv(soilOut7,
-        paste0( "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/teaching/2026/Spring 2026/EnvDataSci/activities/data/activity04/soil/",
-                "soil_data_2023_09.csv"), row.names=FALSE)
 
 rm(list=setdiff(ls(),c("tomst25","dirComp","compID")))
 
