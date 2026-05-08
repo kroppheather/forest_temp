@@ -138,12 +138,14 @@ soilIDs <- soilMod %>%
   distinct()
 
 soilCheck <- soilMod %>%
-  filter(locID == 3)
+  filter(locID == 5)
 
-ggplot(soilCheck, aes(aveT, VWC_gap))+
+ggplot(soilCheck, aes(aveT, SWC_12))+
   geom_point()
 
 ggplot(soilCheck, aes(aveT, Tsoil_6))+
+  geom_point()
+ggplot(soilCheck, aes(aveT, VWC_gap))+
   geom_point()
 
 ggplot(soilCheck, aes(aveT, Tsoil_6, color=VWC_gap))+
