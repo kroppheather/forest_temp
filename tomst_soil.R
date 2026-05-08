@@ -651,7 +651,7 @@ tomstDayLocation <- na.omit(tomstDay) %>%
             Tsurf_15sd = sd(Tsurf15),
             SWC_12sd = sd(SWC),
             nobs = n())%>%
-  filter(nobs ==3)
+  filter(nobs >=2)
 tomstDayLocation$DD <- ifelse(leap_year(tomstDayLocation$year),((tomstDayLocation$doy-1)/366)+tomstDayLocation$year,
                               ((tomstDayLocation$doy-1)/365)+tomstDayLocation$year)
 
@@ -666,6 +666,9 @@ tomst25 <- tomstDayLocation %>%
 ggplot(tomst25, aes(DD, SWC_12, color=location))+
   geom_line()
 ggplot(tomst25, aes(DD, Tsoil_6, color=location))+
+  geom_line()
+
+ggplot(tomst25%>%filter(location == "maple-beech"), aes(DD, Tsoil_6, color=location))+
   geom_line()
 
 

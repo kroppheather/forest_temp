@@ -198,21 +198,21 @@ singleLoc <- soilDat %>%
 rainsnow <- singleLoc %>%
   filter(rain_snow == 1)
 
-wd <- 50
+wd <- 55
 hd <- 15
 
 # x range
 xl <- 2022.74
-xh <- 2025.76
+xh <- 2026.35
 #y range for meteorological graph
 #air temp and precipitation
-yl <- -20
+yl <- -25
 yh <- 30
 #precip in mm
 prMax <- 60
 
 #surface temp
-yl2 <- -20
+yl2 <- -25
 yh2 <- 30
 #snow depth max (mm)
 snMax <- 650
@@ -250,9 +250,9 @@ monthseq <- c(1,32,60,91,121,152,182,213,244,274,305,335)
 monthseqL <- c(1,32,61,92,122,153,183,214,245,275,306,336)
 monthLab <- c("J","F","M","A","M","J","J","A","S","O","N","D")
 
-months <- c(c(274,305,335),monthseq,monthseqL,  c(1,32,60,91,121,152,182,213,244))
-monthsLab <- c(c("O","N","D"),monthLab, monthLab,c("J","F","M","A","M","J","J","A","S"))
-years <- c(rep(2022,3), rep(2023,12),rep(2024,12),rep(2025,9))
+months <- c(c(274,305,335),monthseq,monthseqL,  monthseq,c(1,32,60,91,121))
+monthsLab <- c(c("O","N","D"),monthLab, monthLab,monthLab,c("J","F","M","A"))
+years <- c(rep(2022,3), rep(2023,12),rep(2024,12),rep(2025,12),rep(2026,4))
 monthseq <- ifelse(leap_year(years), (months-1)/366,(months-1)/365)
 monthDD <- years+monthseq
 
@@ -272,7 +272,7 @@ plcx <- 5
 
 
 
-png(paste0(plotDir,"/daily_data.png"), width = 67, height = 70, units = "cm", res=300)
+png(paste0(plotDir,"/daily_data.png"), width = 72, height = 70, units = "cm", res=300)
 layout(matrix(c(1,2,3,4),ncol=1), width=lcm(wd),height=rep(lcm(hd),4))
 #air temp and precip
 par(mai=c(0.25,0,0,0))
@@ -371,7 +371,7 @@ for(i in 1:5){
 }
 axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
 mtext(monthsLab, side=1, at=monthDD, line = lyax, cex=cll)
-mtext(seq(2023,2025), side=1, at=seq(2023,2025), line = lyax+5, cex=cll+1, adj=0)
+mtext(seq(2023,2026), side=1, at=seq(2023,2026), line = lyax+5, cex=cll+1, adj=0)
 
 axis(2, c(-1,yxSW,1), rep("", length(yxSW)+2), cex=cx_tick)
 mtext(yxSW, side=2, at=yxSW, line = lyax, cex=cll, las=2)
