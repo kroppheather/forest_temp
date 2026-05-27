@@ -130,6 +130,7 @@ soilMod$freezeModID <- ifelse(soilMod$aveT <= 0, 1,2) # 1 below or at freezing
 # create ID for forest type and freezing time period
 soilMod$modforestID <- ifelse(soilMod$freezeModID == 1, soilMod$locID,
                               soilMod$locID+5)
+soilMod$swID <- ifelse(soilMod$SWC_12 > 0.33,2,1)
 
 # create ID table
 soilIDs <- soilMod %>%
@@ -160,44 +161,34 @@ dataList <- list(Nobs= nrow(soilMod),
                  modforestID = soilMod$modforestID,
                  forestID = soilMod$locID,
                  air_temp = soilMod$aveT,
-                 SWC = soilMod$VWC_gap,
+                 swID = soilMod$swID,
                  Nmodforest = nrow(soilIDs),
-                 Nparm=2,
+                NSW=2,
                  Nforest=5,
                  plot_tempFreeze = seq(-20,0, length.out=41),
-                 swc_freeze = seq(0.1,0.55, length.out=41),
                  plot_tempWarm = seq(0, 30, length.out=61),
-                 swc_warm = seq(0.1,0.55,length.out=61),
-                 plotLengthFreeze=41, plotLengthWarm=61)
+                plotLengthFreeze=41, plotLengthWarm=61)
+                 
 
 parms <- c("sig_temp"," beta_naught","beta","rep_temp",
-           "mu_temp_freeze_15",
-           "mu_temp_freeze_30",
-           "mu_temp_freeze_50",
-           "mu_temp_warm_15",
-           "mu_temp_warm_30",
-           "mu_temp_warm_50",
-           "mu_swc_freeze_n5",
-           "mu_swc_freeze_0",
-           "mu_swc_warm_5",
-           "mu_swc_warm_20"
-           )
+           "mu_temp_freeze",
+           "mu_temp_warm" )
 
 inits <- list(list(sig_temp = rep(1,nrow(soilIDs)),
-                   beta_naught= rep(0,5),
+                   beta_naught= matrix(rep(0,10),ncol=2),
                    beta=matrix(c(
                           rep(0,10),
-                          rep(0,10)), nrow=2, byrow=TRUE)),
+                          rep(0,10)), ncol=2, byrow=TRUE)),
               list(sig_temp = rep(5,nrow(soilIDs)),
-                   beta_naught = rep(1,5),
+                   beta_naught = matrix(rep(1,10),ncol=2),
                    beta=matrix(c(
                                  rep(-1,10),
-                                 rep(-1,10)), nrow=2, byrow=TRUE)),
+                                 rep(-1,10)), ncol=2, byrow=TRUE)),
               list(sig_temp = rep(3,nrow(soilIDs)),
-                   beta_naught=rep(2,5),
+                   beta_naught=matrix(rep(2,10),ncol=2),
                      beta=matrix(c(
                                  rep(1,10),
-                                 rep(1,10)), nrow=2, byrow=TRUE)))
+                                 rep(1,10)), ncol=2, byrow=TRUE)))
 
 
 temp_mod <- jags.model(file="/Users/hkropp/Documents/GitHub/forest_temp/soil_temp_model.r",
@@ -214,12 +205,8 @@ beta_n_out <- MCMCsummary(temp_sample,params=c( "beta_naught"))
 beta_out <- MCMCsummary(temp_sample,params=c( "beta"))
 beta_out
 beta_out$p_name <- row.names(beta_out)
-beta_out$modforestID <- rep(seq(1,10), each=2)
-beta_out$parmID <- rep(seq(1,2), times=10)
-air_slope <- beta_out %>%
-  filter(parmID == 1)
-swc_slope <- beta_out %>%
-  filter(parmID == 2)
+beta_out$modforestID <- rep(seq(1,10), times=2)
+beta_out$swID <- rep(seq(1,2), each=10)
 sig_out <- MCMCsummary(temp_sample,params=c( "sig_temp"))
 rep_temp <- MCMCsummary(temp_sample,params=c( "rep_temp"))
 
@@ -233,52 +220,22 @@ summary(mod_eval)
 
 write.csv(beta_n_out, 
             "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/beta_n_out.csv")
-write.csv(air_slope, 
+write.csv(beta_out, 
           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/air_slope.csv")
-write.csv(swc_slope, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/swc_slope.csv")
+
 write.csv(sig_out, 
           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/sig_out.csv")
 write.csv(rep_temp, 
           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/rep_out.csv")
 
 
-mu_temp_freeze_15_out <- MCMCsummary(temp_sample,params=c( "mu_temp_freeze_15"))
-mu_temp_freeze_30_out <- MCMCsummary(temp_sample,params=c( "mu_temp_freeze_30"))
-mu_temp_freeze_50_out <- MCMCsummary(temp_sample,params=c( "mu_temp_freeze_50"))
-mu_temp_warm_15_out <- MCMCsummary(temp_sample,params=c( "mu_temp_warm_15"))
-mu_temp_warm_30_out <- MCMCsummary(temp_sample,params=c( "mu_temp_warm_30"))
-mu_temp_warm_50_out <- MCMCsummary(temp_sample,params=c( "mu_temp_warm_50"))
+mu_temp_freeze <- MCMCsummary(temp_sample,params=c( "mu_temp_freeze"))
 
-write.csv(mu_temp_freeze_15_out, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_temp_freeze_15.csv")
-
-write.csv(mu_temp_freeze_30_out, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_temp_freeze_30.csv")
-write.csv(mu_temp_freeze_50_out, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_temp_freeze_50.csv")
-
-write.csv(mu_temp_warm_15_out, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_temp_warm_15.csv")
-
-write.csv(mu_temp_warm_30_out, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_temp_warm_30.csv")
-write.csv(mu_temp_warm_50_out, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_temp_warm_50.csv")
+mu_temp_warm <- MCMCsummary(temp_sample,params=c( "mu_temp_warm"))
 
 
-mu_swc_freeze_n5_out <- MCMCsummary(temp_sample,params=c( "mu_swc_freeze_n5"))
-mu_swc_freeze_0_out <- MCMCsummary(temp_sample,params=c( "mu_swc_freeze_0"))
-mu_swc_warm_5_out <- MCMCsummary(temp_sample,params=c( "mu_swc_warm_5"))
-mu_swc_warm_20_out <- MCMCsummary(temp_sample,params=c( "mu_swc_warm_20"))
+write.csv(mu_temp_freeze, 
+          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_temp_freeze.csv")
 
-write.csv(mu_swc_freeze_n5_out, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_swc_freeze_n5.csv")
-
-write.csv(mu_swc_freeze_0_out, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_swc_freeze_0.csv")
-write.csv(mu_swc_warm_5_out, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_swc_warm_5.csv")
-
-write.csv(mu_swc_warm_20_out, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_swc_warm_20.csv")
+write.csv(mu_temp_warm, 
+          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_temp_warm.csv")

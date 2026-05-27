@@ -483,33 +483,6 @@ mu_temp_freeze_30$IDS <- gsub("mu_temp_freeze_30","",mu_temp_freeze_30$X)
 mu_temp_freeze_30s  <- separate_wider_delim(mu_temp_freeze_30, IDS, ",", names=c("repID","locID"))
 mu_temp_freeze_30s$locID <- as.numeric(gsub("\\D","", mu_temp_freeze_30s$locID ))
 
-mu_temp_warm_30 <- read.csv(paste0(modDir, "/mu_temp_warm_30.csv"))
-mu_temp_warm_30$IDS <- gsub("mu_temp_warm_30","",mu_temp_warm_30$X)
-mu_temp_warm_30s  <- separate_wider_delim(mu_temp_warm_30, IDS, ",", names=c("repID","locID"))
-mu_temp_warm_30s$locID <- as.numeric(gsub("\\D","", mu_temp_warm_30s$locID ))
-
-
-
-mu_temp_freeze_50 <- read.csv(paste0(modDir, "/mu_temp_freeze_50.csv"))
-mu_temp_freeze_50$IDS <- gsub("mu_temp_freeze_50","",mu_temp_freeze_50$X)
-mu_temp_freeze_50s  <- separate_wider_delim(mu_temp_freeze_50, IDS, ",", names=c("repID","locID"))
-mu_temp_freeze_50s$locID <- as.numeric(gsub("\\D","", mu_temp_freeze_50s$locID ))
-
-mu_temp_warm_50 <- read.csv(paste0(modDir, "/mu_temp_warm_50.csv"))
-mu_temp_warm_50$IDS <- gsub("mu_temp_warm_50","",mu_temp_warm_50$X)
-mu_temp_warm_50s  <- separate_wider_delim(mu_temp_warm_50, IDS, ",", names=c("repID","locID"))
-mu_temp_warm_50s$locID <- as.numeric(gsub("\\D","", mu_temp_warm_50s$locID ))
-
-mu_temp_freeze_15 <- read.csv(paste0(modDir, "/mu_temp_freeze_15.csv"))
-mu_temp_freeze_15$IDS <- gsub("mu_temp_freeze_15","",mu_temp_freeze_15$X)
-mu_temp_freeze_15s  <- separate_wider_delim(mu_temp_freeze_15, IDS, ",", names=c("repID","locID"))
-mu_temp_freeze_15s$locID <- as.numeric(gsub("\\D","", mu_temp_freeze_15s$locID ))
-
-mu_temp_warm_15 <- read.csv(paste0(modDir, "/mu_temp_warm_15.csv"))
-mu_temp_warm_15$IDS <- gsub("mu_temp_warm_15","",mu_temp_warm_15$X)
-mu_temp_warm_15s  <- separate_wider_delim(mu_temp_warm_15, IDS, ",", names=c("repID","locID"))
-mu_temp_warm_15s$locID <- as.numeric(gsub("\\D","", mu_temp_warm_15s$locID ))
-
 wd <- 6
 hd <- 6
 
@@ -524,13 +497,6 @@ layout(matrix(c(1,2,3,4,5),ncol=1), width=lcm(wd),height=rep(lcm(hd),5))
 plotS <- soilMod %>% filter(locID == 1)
 
 
-mu30s <- mu_temp_freeze_30s   %>% filter(locID == 1)
-mu30ws <- mu_temp_warm_30s   %>% filter(locID == 1)
-mu50s <- mu_temp_freeze_50s   %>% filter(locID == 1)
-mu50ws <- mu_temp_warm_50s   %>% filter(locID == 1)
-
-mu15s <- mu_temp_freeze_15s   %>% filter(locID == 1)
-mu15ws <- mu_temp_warm_15s   %>% filter(locID == 1)
 
 plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
   xlab= " ", ylab=" ", axes=FALSE)
