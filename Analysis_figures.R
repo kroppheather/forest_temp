@@ -488,6 +488,28 @@ mu_temp_warm_30$IDS <- gsub("mu_temp_warm_30","",mu_temp_warm_30$X)
 mu_temp_warm_30s  <- separate_wider_delim(mu_temp_warm_30, IDS, ",", names=c("repID","locID"))
 mu_temp_warm_30s$locID <- as.numeric(gsub("\\D","", mu_temp_warm_30s$locID ))
 
+
+
+mu_temp_freeze_50 <- read.csv(paste0(modDir, "/mu_temp_freeze_50.csv"))
+mu_temp_freeze_50$IDS <- gsub("mu_temp_freeze_50","",mu_temp_freeze_50$X)
+mu_temp_freeze_50s  <- separate_wider_delim(mu_temp_freeze_50, IDS, ",", names=c("repID","locID"))
+mu_temp_freeze_50s$locID <- as.numeric(gsub("\\D","", mu_temp_freeze_50s$locID ))
+
+mu_temp_warm_50 <- read.csv(paste0(modDir, "/mu_temp_warm_50.csv"))
+mu_temp_warm_50$IDS <- gsub("mu_temp_warm_50","",mu_temp_warm_50$X)
+mu_temp_warm_50s  <- separate_wider_delim(mu_temp_warm_50, IDS, ",", names=c("repID","locID"))
+mu_temp_warm_50s$locID <- as.numeric(gsub("\\D","", mu_temp_warm_50s$locID ))
+
+mu_temp_freeze_15 <- read.csv(paste0(modDir, "/mu_temp_freeze_15.csv"))
+mu_temp_freeze_15$IDS <- gsub("mu_temp_freeze_15","",mu_temp_freeze_15$X)
+mu_temp_freeze_15s  <- separate_wider_delim(mu_temp_freeze_15, IDS, ",", names=c("repID","locID"))
+mu_temp_freeze_15s$locID <- as.numeric(gsub("\\D","", mu_temp_freeze_15s$locID ))
+
+mu_temp_warm_15 <- read.csv(paste0(modDir, "/mu_temp_warm_15.csv"))
+mu_temp_warm_15$IDS <- gsub("mu_temp_warm_15","",mu_temp_warm_15$X)
+mu_temp_warm_15s  <- separate_wider_delim(mu_temp_warm_15, IDS, ",", names=c("repID","locID"))
+mu_temp_warm_15s$locID <- as.numeric(gsub("\\D","", mu_temp_warm_15s$locID ))
+
 wd <- 6
 hd <- 6
 
@@ -500,11 +522,21 @@ png(paste0(plotDir,"/mod_data.png"), width = 10, height = 50, units = "cm", res=
 layout(matrix(c(1,2,3,4,5),ncol=1), width=lcm(wd),height=rep(lcm(hd),5))
 # loc 1: maple beech
 plotS <- soilMod %>% filter(locID == 1)
+
+
 mu30s <- mu_temp_freeze_30s   %>% filter(locID == 1)
 mu30ws <- mu_temp_warm_30s   %>% filter(locID == 1)
+mu50s <- mu_temp_freeze_50s   %>% filter(locID == 1)
+mu50ws <- mu_temp_warm_50s   %>% filter(locID == 1)
+
+mu15s <- mu_temp_freeze_15s   %>% filter(locID == 1)
+mu15ws <- mu_temp_warm_15s   %>% filter(locID == 1)
+
 plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
   xlab= " ", ylab=" ", axes=FALSE)
   points(plotS$aveT, plotS$Tsoil_6, pch=19, col=locColorst[1])
+  
+# model mean line for SWC at 0.3  
   points(plotFreeze$temp_freeze, mu30s$mean, type="l") 
     
       polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
@@ -516,5 +548,44 @@ points(plotWarm$temp_warm, mu30ws$mean, type="l")
 polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
         c(mu30ws$X2.5., rev(mu30ws$X97.5.)), col=rgb(0.5,0.5,0.5,0.75),
         border=NA)
+# model line for SWC at 0.5
+
+points(plotFreeze$temp_freeze, mu50s$mean, type="l", col="blue") 
+
+polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
+        c(mu50s$X2.5., rev(mu50s$X97.5.)), col=rgb(0.5,0.5,0.5,0.75),
+        border=NA)
+
+points(plotWarm$temp_warm, mu50ws$mean, type="l", col="blue") 
+
+polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
+        c(mu50ws$X2.5., rev(mu50ws$X97.5.)), col=rgb(0.5,0.5,0.5,0.75),
+        border=NA)
+
+# model line for SWC at 0.15
+
+points(plotFreeze$temp_freeze, mu15s$mean, type="l", col="red") 
+
+polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
+        c(mu15s$X2.5., rev(mu15s$X97.5.)), col=rgb(0.5,0.5,0.5,0.75),
+        border=NA)
+
+points(plotWarm$temp_warm, mu15ws$mean, type="l", col="red") 
+
+polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
+        c(mu15ws$X2.5., rev(mu15ws$X97.5.)), col=rgb(0.5,0.5,0.5,0.75),
+        border=NA)
 dev.off()
+
+hist(soilMod$SWC_12[soilMod$locID==1])
+
+plotS <- soilMod %>% filter(locID == 5 & SWC_12 <= 0.33)
+plotS2 <- soilMod %>% filter(locID == 5 & SWC_12 > 0.33)
+plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+points(plotS$aveT, plotS$Tsoil_6,  pch=19, col="tomato3")
+points(plotS2$aveT, plotS2$Tsoil_6,  pch=19, col="royalblue3")
+axis(side=1, seq(-20,25,by=5))
+
+
 
