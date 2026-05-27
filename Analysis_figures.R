@@ -13,6 +13,7 @@
 library(dplyr)
 library(lubridate)
 library(ggplot2)
+library(tidyr)
 
 dirComp <- c("G:/My Drive/research/projects",
              "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects")
@@ -469,14 +470,51 @@ beta_n <- read.csv(paste0(modDir, "/beta_n_out.csv"))
 beta_air <- read.csv(paste0(modDir, "/air_slope.csv"))
 beta_swc <- read.csv(paste0(modDir, "/swc_slope.csv"))
 # for plotting: predicted mu with CI
-mu_temp_freeze_50 <- read.csv(paste0(modDir, "/mu_temp_freeze_50.csv"))
+
+plotFreeze <- data.frame(temp_freeze = seq(-20,0, length.out=41),
+                         swc_freeze = seq(0.1,0.55, length.out=41))
+                                               
+plotWarm <- data.frame( temp_warm= seq(0, 30, length.out=61),
+       swc_warm = seq(0.1,0.55,length.out=61))
+
+
+mu_temp_freeze_30 <- read.csv(paste0(modDir, "/mu_temp_freeze_30.csv"))
+mu_temp_freeze_30$IDS <- gsub("mu_temp_freeze_30","",mu_temp_freeze_30$X)
+mu_temp_freeze_30s  <- separate_wider_delim(mu_temp_freeze_30, IDS, ",", names=c("repID","locID"))
+mu_temp_freeze_30s$locID <- as.numeric(gsub("\\D","", mu_temp_freeze_30s$locID ))
+
+mu_temp_warm_30 <- read.csv(paste0(modDir, "/mu_temp_warm_30.csv"))
+mu_temp_warm_30$IDS <- gsub("mu_temp_warm_30","",mu_temp_warm_30$X)
+mu_temp_warm_30s  <- separate_wider_delim(mu_temp_warm_30, IDS, ",", names=c("repID","locID"))
+mu_temp_warm_30s$locID <- as.numeric(gsub("\\D","", mu_temp_warm_30s$locID ))
 
 wd <- 6
 hd <- 6
 
-png(paste0(plotDir,"/daily_data.png"), width = 10, height = 50, units = "cm", res=300)
+xl1 <- -25
+xh1 <- 30
+yl1 <- -5
+yh1 <- 25
+
+png(paste0(plotDir,"/mod_data.png"), width = 10, height = 50, units = "cm", res=300)
 layout(matrix(c(1,2,3,4,5),ncol=1), width=lcm(wd),height=rep(lcm(hd),5))
+# loc 1: maple beech
+plotS <- soilMod %>% filter(locID == 1)
+mu30s <- mu_temp_freeze_30s   %>% filter(locID == 1)
+mu30ws <- mu_temp_warm_30s   %>% filter(locID == 1)
+plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
+  xlab= " ", ylab=" ", axes=FALSE)
+  points(plotS$aveT, plotS$Tsoil_6, pch=19, col=locColorst[1])
+  points(plotFreeze$temp_freeze, mu30s$mean, type="l") 
+    
+      polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
+              c(mu30s$X2.5., rev(mu30s$X97.5.)), col=rgb(0.5,0.5,0.5,0.75),
+              border=NA)
+    
+points(plotWarm$temp_warm, mu30ws$mean, type="l") 
 
-
+polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
+        c(mu30ws$X2.5., rev(mu30ws$X97.5.)), col=rgb(0.5,0.5,0.5,0.75),
+        border=NA)
 dev.off()
 
