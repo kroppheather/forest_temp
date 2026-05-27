@@ -130,6 +130,7 @@ soilMod$freezeModID <- ifelse(soilMod$aveT <= 0, 1,2) # 1 below or at freezing
 # create ID for forest type and freezing time period
 soilMod$modforestID <- ifelse(soilMod$freezeModID == 1, soilMod$locID,
                               soilMod$locID+5)
+# ID if swc is above or below field capacity
 soilMod$swID <- ifelse(soilMod$SWC_12 > 0.33,2,1)
 
 # create ID table

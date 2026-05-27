@@ -164,7 +164,8 @@ soilMod$freezeModID <- ifelse(soilMod$aveT <= 0, 1,2) # 1 below or at freezing
 # create ID for forest type and freezing time period
 soilMod$modforestID <- ifelse(soilMod$freezeModID == 1, soilMod$locID,
                               soilMod$locID+5)
-
+# ID if swc is above or below field capacity
+soilMod$swID <- ifelse(soilMod$SWC_12 > 0.33,2,1)
 # create ID table
 soilIDs <- soilMod %>%
   ungroup %>%
@@ -413,7 +414,7 @@ FITot <-  forestInventory %>%
   filter(Species != "CEOR") %>%
   filter(Species != "VITIS") %>% # remove vines from dbh calcs
   group_by(Plot) %>%
-  summarise(totArea = sum(tree_area.cm2,na.rm=TRUE),
+  summarise(totArea = sum(tree_area.m2,na.rm=TRUE),
             ncount = n(),
             aveDBH = mean(DBH.cm,na.rm=TRUE))
 
@@ -468,7 +469,7 @@ PlotTable <- left_join(PlotTable, SpeciesTable, by="Plot")
 ####### Figure : temperature model and patterns ----
 beta_n <- read.csv(paste0(modDir, "/beta_n_out.csv"))
 beta_air <- read.csv(paste0(modDir, "/air_slope.csv"))
-beta_swc <- read.csv(paste0(modDir, "/swc_slope.csv"))
+
 # for plotting: predicted mu with CI
 
 plotFreeze <- data.frame(temp_freeze = seq(-20,0, length.out=41),
@@ -478,10 +479,20 @@ plotWarm <- data.frame( temp_warm= seq(0, 30, length.out=61),
        swc_warm = seq(0.1,0.55,length.out=61))
 
 
-mu_temp_freeze_30 <- read.csv(paste0(modDir, "/mu_temp_freeze_30.csv"))
-mu_temp_freeze_30$IDS <- gsub("mu_temp_freeze_30","",mu_temp_freeze_30$X)
-mu_temp_freeze_30s  <- separate_wider_delim(mu_temp_freeze_30, IDS, ",", names=c("repID","locID"))
-mu_temp_freeze_30s$locID <- as.numeric(gsub("\\D","", mu_temp_freeze_30s$locID ))
+mu_temp_freeze <- read.csv(paste0(modDir, "/mu_temp_freeze.csv"))
+mu_temp_freeze$IDS <- gsub("mu_temp_freeze","",mu_temp_freeze$X)
+
+mu_temp_freezes  <- separate_wider_delim(mu_temp_freeze, IDS, ",", names=c("repID","locID","swID"))
+mu_temp_freezes$locID <- as.numeric( mu_temp_freezes$locID )
+mu_temp_freezes$swID <- as.numeric(gsub("\\D","", mu_temp_freezes$swID ))
+
+
+mu_temp_warm <- read.csv(paste0(modDir, "/mu_temp_warm.csv"))
+mu_temp_warm$IDS <- gsub("mu_temp_warm","",mu_temp_warm$X)
+
+mu_temp_warms  <- separate_wider_delim(mu_temp_warm, IDS, ",", names=c("repID","locID","swID"))
+mu_temp_warms$locID <- as.numeric( mu_temp_warms$locID )
+mu_temp_warms$swID <- as.numeric(gsub("\\D","", mu_temp_warms$swID ))
 
 wd <- 6
 hd <- 6
@@ -495,8 +506,6 @@ png(paste0(plotDir,"/mod_data.png"), width = 10, height = 50, units = "cm", res=
 layout(matrix(c(1,2,3,4,5),ncol=1), width=lcm(wd),height=rep(lcm(hd),5))
 # loc 1: maple beech
 plotS <- soilMod %>% filter(locID == 1)
-
-
 
 plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
   xlab= " ", ylab=" ", axes=FALSE)
