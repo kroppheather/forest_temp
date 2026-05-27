@@ -180,11 +180,11 @@ locLabel <- c("Deciduous forest",
               "Invasive scrub",
               "Reforestation field")
 
-locColor <- c(rgb(93,168,153, maxColorValue = 255),
-              rgb(51,117,56, maxColorValue = 255),
-              rgb(148,203,236, maxColorValue = 255),
-              rgb(194,106,119, maxColorValue = 255),
-              rgb(220,205,125, maxColorValue = 255))
+locColor <- c(rgb(126,160,78, maxColorValue = 255), # deciduous
+              rgb(42,109,58, maxColorValue = 255), # mixed forest
+              rgb(148,203,236, maxColorValue = 255), # monoculture
+              rgb(217,148,40, maxColorValue = 255), # scrub
+              rgb(216,192,138, maxColorValue = 255)) # reforestation
 
 locColorst <- c(rgb(93,168,153,100, maxColorValue = 255),
               rgb(51,117,56,100, maxColorValue = 255),
@@ -226,7 +226,7 @@ yl4 <- 0.05
 yh4 <- 0.65
 
 #sizing for lines of graph
-lw <- 5
+lw <- 4
 
 # axes label sequences
 yxAT <- seq(-15,25, by=10)
@@ -350,7 +350,7 @@ abline(h=0)
 
 for(i in 1:5){
   points(soilDat$DD[soilDat$locID==i],soilDat$Tsoil_6[soilDat$locID==i],
-         type="l", col=locColor[i], lwd=lw )
+         type="l", col=locColor[i], lwd=lw)
 }
 axis(2, c(-30,yxSoT,40), rep("", length(yxSoT)+2), cex=cx_tick)
 mtext(yxSoT, side=2, at=yxSoT, line = lyax, cex=cll, las=2)
@@ -368,7 +368,7 @@ legend(2022.9,0.66, locLabel[1:2], col=locColor[1:2], lty=1, lwd=lw, bty="n", ce
 legend(2023.9,0.66, locLabel[3:4], col=locColor[3:4], lty=1, lwd=lw, bty="n", cex=lgcx)
 legend(2024.9,0.66, locLabel[5], col=locColor[5], lty=1, lwd=lw, bty="n", cex=lgcx)
 for(i in 1:5){
-  points(soilDat$DD[soilDat$locID==i],soilDat$VWC_gap[soilDat$locID==i],
+  points(soilDat$DD[soilDat$locID==i],soilDat$SWC_12[soilDat$locID==i],
          type="l", col=locColor[i], lwd=lw )
 }
 axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
