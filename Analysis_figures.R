@@ -201,7 +201,7 @@ rainsnow <- singleLoc %>%
   filter(rain_snow == 1)
 
 wd <- 55
-hd <- 15
+hd <- 18
 
 # x range
 xl <- 2022.74
@@ -211,13 +211,13 @@ xh <- 2026.35
 yl <- -25
 yh <- 30
 #precip in mm
-prMax <- 60
+prMax <- 65
 
 #surface temp
 yl2 <- -25
 yh2 <- 30
-#snow depth max (mm)
-snMax <- 650
+#snow depth max (cm)
+snMax <- 65
 
 yl3 <- -5
 yh3 <- 25
@@ -233,7 +233,7 @@ yxAT <- seq(-15,25, by=10)
 yxSuT <- seq(-15,25, by=10)
 yxSoT <- seq(-5,25, by=5)
 yxSW <- seq(0,0.6, by=0.1)
-yxPR <- seq(0,50, by=10)
+yxPR <- seq(0,60, by=10)
 yxSN <- seq(0,600, by=100)
 # axis sizing
 cx_tick <- 4
@@ -275,13 +275,23 @@ plcx <- 5
 
 
 png(paste0(plotDir,"/daily_data.png"), width = 72, height = 70, units = "cm", res=300)
-layout(matrix(c(1,2,3,4),ncol=1), width=lcm(wd),height=rep(lcm(hd),4))
+layout(matrix(c(1,2,3),ncol=1), width=lcm(wd),height=rep(lcm(hd),3))
 #air temp and precip
 par(mai=c(0.25,0,0,0))
 plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
      xlab= " ", ylab=" ", axes=FALSE)
 
 
+
+for(i in 1:nrow(singleLoc)){
+  polygon(c(singleLoc$DD[i]-0.001,singleLoc$DD[i]-0.001,
+            singleLoc$DD[i]+0.001,singleLoc$DD[i]+0.001),
+          c(precipRescale(0,snMax,yl2,yh2),
+            precipRescale(singleLoc$SNWD[i]/10,snMax,yl2,yh2),
+            precipRescale(singleLoc$SNWD[i]/10,snMax,yl2,yh2),
+            precipRescale(0,snMax,yl2,yh2)),
+          col="grey60", border=NA)
+}
 for(i in 1:nrow(singleLoc)){
   polygon(c(singleLoc$DD[i]-0.001,singleLoc$DD[i]-0.001,
             singleLoc$DD[i]+0.001,singleLoc$DD[i]+0.001),
@@ -289,58 +299,27 @@ for(i in 1:nrow(singleLoc)){
             precipRescale(singleLoc$Precip_gap[i],prMax,yl,yh),
             precipRescale(singleLoc$Precip_gap[i],prMax,yl,yh),
             precipRescale(0,prMax,yl,yh)),
-          col="lightskyblue2", border=NA)
+          col="#4169E199", border=NA)
 }
+
 points(singleLoc$DD, singleLoc$aveT, type="l", pch=19, lwd=lw )
+
 axis(2, c(-30,yxAT,40), rep("", length(yxAT)+2), cex=cx_tick)
 mtext(yxAT, side=2, at=yxAT, line = lyax, cex=cll, las=2)
-axis(4,  precipRescale(yxPR,prMax,yl,yh), rep("", length(yxPR)), cex=cx_tick)
-mtext(yxPR, side=4, at=precipRescale(yxPR,prMax,yl,yh), line = lyax, cex=cll, las=2)
+
 axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
 mtext("Air temperature", side=2, line=lly1, cex=labll, )
 mtext(expression(paste("(",degree,"C)")), side=2, line=lly2, cex=labll)
 
-mtext("Precipitation", side=4, line=lly3, cex=labll)
-mtext("(mm)", side=4, line=lly4, cex=labll)
-legend(2024.25,33, c("temperature", "precipitation"), col=c("black","lightskyblue2"), lwd=c(lw,NA), pch=c(NA,15),
+
+legend(2024.05,33, c("temperature", "snow depth", "precipitation"), col=c("black","grey75","#4169E199"), lwd=c(lw,NA,NA), pch=c(NA,15,15),
        bty="n", horiz=TRUE, cex=lgcx)
 text(xp, 27, "A", cex=plcx)
-# above surface temp and snow
-par(mai=c(0.25,0,0,0))
-plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
-     xlab= " ", ylab=" ", axes=FALSE)
+axis(4,  precipRescale(yxPR,prMax,yl,yh), rep("", length(yxPR)), cex=cx_tick)
+mtext(yxPR, side=4, at=precipRescale(yxPR,prMax,yl,yh), line = lyax, cex=cll, las=2)
+mtext("Precipitation (mm)", side=4, line=lly3, cex=labll)
+mtext("Snow depth (cm)", side=4, line=lly4, cex=labll)
 
-for(i in 1:nrow(singleLoc)){
-  polygon(c(singleLoc$DD[i]-0.001,singleLoc$DD[i]-0.001,
-            singleLoc$DD[i]+0.001,singleLoc$DD[i]+0.001),
-          c(precipRescale(0,snMax,yl2,yh2),
-            precipRescale(singleLoc$SNWD[i],snMax,yl2,yh2),
-            precipRescale(singleLoc$SNWD[i],snMax,yl2,yh2),
-            precipRescale(0,snMax,yl2,yh2)),
-          col="grey75", border=NA)
-}
-
-
-
-for(i in 1:5){
-  points(soilDat$DD[soilDat$locID==i],soilDat$Tsurf_15[soilDat$locID==i],
-         type="l", col=locColor[i], lwd=lw )
-}
-abline(h=0)
-#text(rainsnow$DD, rep(25,length(rainsnow$DD)), "*")
-axis(2, c(-30,yxSuT,40), rep("", length(yxSuT)+2), cex=cx_tick)
-mtext(yxSuT, side=2, at=yxSuT, line = lyax, cex=cll, las=2)
-axis(4,  precipRescale(yxSN,snMax,yl2,yh2), rep("", length(yxSN)), cex=cx_tick)
-mtext(yxSN, side=4, at=precipRescale(yxSN,snMax,yl2,yh2), line = lyax, cex=cll, las=2)
-axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
-mtext("Surface temperature", side=2, line=lly1, cex=labll)
-mtext(expression(paste("(",degree,"C)")), side=2, line=lly2, cex=labll)
-
-mtext("Snow depth", side=4, line=lly3, cex=labll)
-mtext("(mm)", side=4, line=lly4, cex=labll)
-legend(2024.25,33, c( "snow depth"), col=c("grey75"), pch=15,
-       bty="n", horiz=TRUE, cex=lgcx)
-text(xp, 27, "B", cex=plcx)
 # soil temp
 par(mai=c(0.25,0,0,0))
 plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl3,yh3), xaxs="i",yaxs="i",
@@ -357,7 +336,7 @@ mtext(yxSoT, side=2, at=yxSoT, line = lyax, cex=cll, las=2)
 axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
 mtext("Soil temperature", side=2, line=lly1, cex=labll)
 mtext(expression(paste("(", degree,"C)")), side=2, line=lly2, cex=labll)
-text(xp, 23, "C", cex=plcx)
+text(xp, 23, "B", cex=plcx)
 #soil moisture
 
 par(mai=c(0.25,0,0,0))
@@ -365,8 +344,8 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl4,yh4), xaxs="i",yaxs="i",
      xlab= " ", ylab=" ", axes=FALSE)
 
 legend(2022.9,0.66, locLabel[1:2], col=locColor[1:2], lty=1, lwd=lw, bty="n", cex=lgcx)
-legend(2023.9,0.66, locLabel[3:4], col=locColor[3:4], lty=1, lwd=lw, bty="n", cex=lgcx)
-legend(2024.9,0.66, locLabel[5], col=locColor[5], lty=1, lwd=lw, bty="n", cex=lgcx)
+legend(2023.95,0.66, locLabel[3:4], col=locColor[3:4], lty=1, lwd=lw, bty="n", cex=lgcx)
+legend(2024.95,0.66, locLabel[5], col=locColor[5], lty=1, lwd=lw, bty="n", cex=lgcx)
 for(i in 1:5){
   points(soilDat$DD[soilDat$locID==i],soilDat$SWC_12[soilDat$locID==i],
          type="l", col=locColor[i], lwd=lw )
@@ -379,7 +358,7 @@ axis(2, c(-1,yxSW,1), rep("", length(yxSW)+2), cex=cx_tick)
 mtext(yxSW, side=2, at=yxSW, line = lyax, cex=cll, las=2)
 mtext("Soil moisture", side=2, line=lly1, cex=labll)
 mtext(expression(paste("(m"^3,"m"^-3,")")), side=2, line=lly2, cex=labll)
-text(xp, 0.6, "D", cex=plcx)
+text(xp, 0.6, "C", cex=plcx)
 dev.off()
 
 ### examples
@@ -563,4 +542,38 @@ points(plotS2$aveT, plotS2$Tsoil_6,  pch=19, col="royalblue3")
 axis(side=1, seq(-20,25,by=5))
 
 
+
+
+
+################# Supplement:
+
+par(mai=c(0.25,0,0,0))
+plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+
+for(i in 1:nrow(singleLoc)){
+  polygon(c(singleLoc$DD[i]-0.001,singleLoc$DD[i]-0.001,
+            singleLoc$DD[i]+0.001,singleLoc$DD[i]+0.001),
+          c(precipRescale(0,snMax,yl2,yh2),
+            precipRescale(singleLoc$SNWD[i],snMax,yl2,yh2),
+            precipRescale(singleLoc$SNWD[i],snMax,yl2,yh2),
+            precipRescale(0,snMax,yl2,yh2)),
+          col="grey75", border=NA)
+}
+
+
+
+for(i in 1:5){
+  points(soilDat$DD[soilDat$locID==i],soilDat$Tsurf_15[soilDat$locID==i],
+         type="l", col=locColor[i], lwd=lw )
+}
+abline(h=0)
+#text(rainsnow$DD, rep(25,length(rainsnow$DD)), "*")
+axis(2, c(-30,yxSuT,40), rep("", length(yxSuT)+2), cex=cx_tick)
+mtext(yxSuT, side=2, at=yxSuT, line = lyax, cex=cll, las=2)
+axis(4,  precipRescale(yxSN,snMax,yl2,yh2), rep("", length(yxSN)), cex=cx_tick)
+mtext(yxSN, side=4, at=precipRescale(yxSN,snMax,yl2,yh2), line = lyax, cex=cll, las=2)
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+mtext("Surface temperature", side=2, line=lly1, cex=labll)
+mtext(expression(paste("(",degree,"C)")), side=2, line=lly2, cex=labll)
 
