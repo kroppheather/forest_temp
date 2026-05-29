@@ -186,11 +186,11 @@ locColor <- c(rgb(126,160,78, maxColorValue = 255), # deciduous
               rgb(217,148,40, maxColorValue = 255), # scrub
               rgb(216,192,138, maxColorValue = 255)) # reforestation
 
-locColorst <- c(rgb(93,168,153,100, maxColorValue = 255),
-              rgb(51,117,56,100, maxColorValue = 255),
-              rgb(148,203,236,100, maxColorValue = 255),
-              rgb(194,106,119,100, maxColorValue = 255),
-              rgb(220,205,125,100, maxColorValue = 255))
+locColorst <- c(rgb(126,160,78,100, maxColorValue = 255), # deciduous
+                rgb(42,109,58,100, maxColorValue = 255), # mixed forest
+                rgb(148,203,236,100, maxColorValue = 255), # monoculture
+                rgb(217,148,40,100, maxColorValue = 255), # scrub
+                rgb(216,192,138,100, maxColorValue = 255)) # reforestation
 
 
 ####### Figure 1: Met and soil data ----
@@ -484,51 +484,165 @@ yh1 <- 25
 png(paste0(plotDir,"/mod_data.png"), width = 10, height = 50, units = "cm", res=300)
 layout(matrix(c(1,2,3,4,5),ncol=1), width=lcm(wd),height=rep(lcm(hd),5))
 # loc 1: maple beech
-plotS <- soilMod %>% filter(locID == 1)
+plotS1 <- soilMod %>% filter(locID == 1 & swID == 1)
+plotS2 <- soilMod %>% filter(locID == 1 & swID == 2)
 
+
+# location 1
+mfr1 <- mu_temp_freezes %>% filter(locID == 1 & swID == 1)
+mfr2 <- mu_temp_freezes %>% filter(locID == 1 & swID == 2)
+mwr1 <- mu_temp_warms %>% filter(locID == 1 & swID == 1)
+mwr2 <- mu_temp_warms %>% filter(locID == 1 & swID == 2)
+# gray green rgb(0.58,0.63,0.53,0.25)
 plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
   xlab= " ", ylab=" ", axes=FALSE)
-  points(plotS$aveT, plotS$Tsoil_6, pch=19, col=locColorst[1])
-  
-# model mean line for SWC at 0.3  
-  points(plotFreeze$temp_freeze, mu30s$mean, type="l") 
+  points(plotS1$aveT, plotS1$Tsoil_6, pch=19, col=rgb(0.49,0.63,0.3,0.25))
+  points(plotS2$aveT, plotS2$Tsoil_6, pch=19, col=rgb(0.5,0.5,0.5,0.25))
+
+      # model mean line for SWC <= 0.33  
+ 
     
       polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
-              c(mu30s$X2.5., rev(mu30s$X97.5.)), col=rgb(0.5,0.5,0.5,0.75),
+              c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.49,0.63,0.3,0.5),
               border=NA)
+      polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
+              c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.49,0.63,0.3,0.5),
+              border=NA)
+      points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.49,0.63,0.3), lwd=2) 
     
-points(plotWarm$temp_warm, mu30ws$mean, type="l") 
+        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.49,0.63,0.3), lwd=2) 
 
-polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
-        c(mu30ws$X2.5., rev(mu30ws$X97.5.)), col=rgb(0.5,0.5,0.5,0.75),
-        border=NA)
-# model line for SWC at 0.5
 
-points(plotFreeze$temp_freeze, mu50s$mean, type="l", col="blue") 
-
-polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
-        c(mu50s$X2.5., rev(mu50s$X97.5.)), col=rgb(0.5,0.5,0.5,0.75),
-        border=NA)
-
-points(plotWarm$temp_warm, mu50ws$mean, type="l", col="blue") 
-
-polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
-        c(mu50ws$X2.5., rev(mu50ws$X97.5.)), col=rgb(0.5,0.5,0.5,0.75),
-        border=NA)
-
-# model line for SWC at 0.15
-
-points(plotFreeze$temp_freeze, mu15s$mean, type="l", col="red") 
-
-polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
-        c(mu15s$X2.5., rev(mu15s$X97.5.)), col=rgb(0.5,0.5,0.5,0.75),
-        border=NA)
-
-points(plotWarm$temp_warm, mu15ws$mean, type="l", col="red") 
-
-polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
-        c(mu15ws$X2.5., rev(mu15ws$X97.5.)), col=rgb(0.5,0.5,0.5,0.75),
-        border=NA)
+        # model mean line for SWC > 0.33  
+        
+        
+        polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
+                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,0.5),
+                border=NA)
+        polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
+                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.55,0.5),
+                border=NA)
+        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2) 
+        
+        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2)
+        
+        
+        
+        # location 2
+        mfr1 <- mu_temp_freezes %>% filter(locID == 2 & swID == 1)
+        mfr2 <- mu_temp_freezes %>% filter(locID == 2 & swID == 2)
+        mwr1 <- mu_temp_warms %>% filter(locID == 2 & swID == 1)
+        mwr2 <- mu_temp_warms %>% filter(locID == 2 & swID == 2)
+        # gray green rgb(0.58,0.63,0.53,0.25)
+        plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
+             xlab= " ", ylab=" ", axes=FALSE)
+        points(plotS1$aveT, plotS1$Tsoil_6, pch=19, col=rgb(0.16,0.42,0.22,0.25))
+        points(plotS2$aveT, plotS2$Tsoil_6, pch=19, col=rgb(0.5,0.5,0.5,0.25))
+        
+        # model mean line for SWC <= 0.33  
+        
+        
+        polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
+                c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.16,0.42,0.22,0.5),
+                border=NA)
+        polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
+                c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.16,0.42,0.22,0.5),
+                border=NA)
+        points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.16,0.42,0.22), lwd=2) 
+        
+        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.16,0.42,0.22), lwd=2) 
+        
+        
+        # model mean line for SWC > 0.33  
+        
+        
+        polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
+                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,0.5),
+                border=NA)
+        polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
+                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.55,0.5),
+                border=NA)
+        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2) 
+        
+        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2)
+        
+        # location 3
+        mfr1 <- mu_temp_freezes %>% filter(locID == 3 & swID == 1)
+        mfr2 <- mu_temp_freezes %>% filter(locID == 3 & swID == 2)
+        mwr1 <- mu_temp_warms %>% filter(locID == 3 & swID == 1)
+        mwr2 <- mu_temp_warms %>% filter(locID == 3 & swID == 2)
+        # gray green rgb(0.58,0.63,0.53,0.25)
+        plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
+             xlab= " ", ylab=" ", axes=FALSE)
+        points(plotS1$aveT, plotS1$Tsoil_6, pch=19, col=rgb(0.58,0.79,0.92,0.25))
+        points(plotS2$aveT, plotS2$Tsoil_6, pch=19, col=rgb(0.5,0.5,0.5,0.25))
+        
+        # model mean line for SWC <= 0.33  
+        
+        
+        polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
+                c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.58,0.79,0.92,0.5),
+                border=NA)
+        polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
+                c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.58,0.79,0.92,0.5),
+                border=NA)
+        points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.58,0.79,0.92), lwd=2) 
+        
+        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.58,0.79,0.92), lwd=2) 
+        
+        
+        # model mean line for SWC > 0.33  
+        
+        
+        polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
+                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,0.5),
+                border=NA)
+        polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
+                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.55,0.5),
+                border=NA)
+        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2) 
+        
+        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2)
+        
+        
+        
+        # location 3
+        mfr1 <- mu_temp_freezes %>% filter(locID == 4 & swID == 1)
+        mfr2 <- mu_temp_freezes %>% filter(locID == 4 & swID == 2)
+        mwr1 <- mu_temp_warms %>% filter(locID == 4 & swID == 1)
+        mwr2 <- mu_temp_warms %>% filter(locID == 4 & swID == 2)
+        # gray green rgb(0.58,0.63,0.53,0.25)
+        plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
+             xlab= " ", ylab=" ", axes=FALSE)
+        points(plotS1$aveT, plotS1$Tsoil_6, pch=19, col=rgb(0.58,0.79,0.92,0.25))
+        points(plotS2$aveT, plotS2$Tsoil_6, pch=19, col=rgb(0.5,0.5,0.5,0.25))
+        
+        # model mean line for SWC <= 0.33  
+        
+        
+        polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
+                c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.58,0.79,0.92,0.5),
+                border=NA)
+        polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
+                c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.58,0.79,0.92,0.5),
+                border=NA)
+        points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.58,0.79,0.92), lwd=2) 
+        
+        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.58,0.79,0.92), lwd=2) 
+        
+        
+        # model mean line for SWC > 0.33  
+        
+        
+        polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
+                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,0.5),
+                border=NA)
+        polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
+                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.55,0.5),
+                border=NA)
+        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2) 
+        
+        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2)
 dev.off()
 
 hist(soilMod$SWC_12[soilMod$locID==1])
@@ -545,7 +659,7 @@ axis(side=1, seq(-20,25,by=5))
 
 
 
-################# Supplement:
+################# Supplement: -----
 
 par(mai=c(0.25,0,0,0))
 plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
