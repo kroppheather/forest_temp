@@ -606,7 +606,7 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
         
         
-        # location 3
+        # location 4
         mfr1 <- mu_temp_freezes %>% filter(locID == 4 & swID == 1)
         mfr2 <- mu_temp_freezes %>% filter(locID == 4 & swID == 2)
         mwr1 <- mu_temp_warms %>% filter(locID == 4 & swID == 1)
