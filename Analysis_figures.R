@@ -473,15 +473,15 @@ mu_temp_warms  <- separate_wider_delim(mu_temp_warm, IDS, ",", names=c("repID","
 mu_temp_warms$locID <- as.numeric( mu_temp_warms$locID )
 mu_temp_warms$swID <- as.numeric(gsub("\\D","", mu_temp_warms$swID ))
 
-wd <- 6
-hd <- 6
+wd <- 35
+hd <- 15
 
 xl1 <- -25
 xh1 <- 30
 yl1 <- -5
 yh1 <- 25
 
-png(paste0(plotDir,"/mod_data.png"), width = 10, height = 50, units = "cm", res=300)
+png(paste0(plotDir,"/mod_data.png"), width = 37, height = 77, units = "cm", res=300)
 layout(matrix(c(1,2,3,4,5),ncol=1), width=lcm(wd),height=rep(lcm(hd),5))
 # loc 1: maple beech
 plotS1 <- soilMod %>% filter(locID == 1 & swID == 1)
@@ -614,19 +614,19 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         # gray green rgb(0.58,0.63,0.53,0.25)
         plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
              xlab= " ", ylab=" ", axes=FALSE)
-        points(plotS1$aveT, plotS1$Tsoil_6, pch=19, col=rgb(0.58,0.79,0.92,0.25))
+        points(plotS1$aveT, plotS1$Tsoil_6, pch=19, col=rgb(0.85,0.58,0.39,0.25))
         points(plotS2$aveT, plotS2$Tsoil_6, pch=19, col=rgb(0.5,0.5,0.5,0.25))
         
         # model mean line for SWC <= 0.33  
         
         
         polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
-                c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.58,0.79,0.92,0.5),
+                c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.85,0.58,0.39,0.5),
                 border=NA)
         polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
-                c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.58,0.79,0.92,0.5),
+                c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.85,0.58,0.39,,0.5),
                 border=NA)
-        points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.58,0.79,0.92), lwd=2) 
+        points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.85,0.58,0.39,), lwd=2) 
         
         points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.58,0.79,0.92), lwd=2) 
         
@@ -643,17 +643,50 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2) 
         
         points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2)
+        
+        # location 5
+        mfr1 <- mu_temp_freezes %>% filter(locID == 5 & swID == 1)
+        mfr2 <- mu_temp_freezes %>% filter(locID == 5 & swID == 2)
+        mwr1 <- mu_temp_warms %>% filter(locID == 5 & swID == 1)
+        mwr2 <- mu_temp_warms %>% filter(locID == 5 & swID == 2)
+        plotS <- soilMod %>% filter(locID == 5 & SWC_12 <= 0.33)
+        plotS2 <- soilMod %>% filter(locID == 5 & SWC_12 > 0.33)
+        
+        plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
+             xlab= " ", ylab=" ", axes=FALSE)
+        points(plotS1$aveT, plotS1$Tsoil_6, pch=19, col=rgb(0.85,0.75,0.54,0.25))
+        points(plotS2$aveT, plotS2$Tsoil_6, pch=19, col=rgb(0.5,0.5,0.5,0.25))
+        
+        # model mean line for SWC <= 0.33  
+        
+        
+        polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
+                c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.85,0.75,0.54,0.5),
+                border=NA)
+        polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
+                c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.85,0.75,0.54,,0.5),
+                border=NA)
+        points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.85,0.75,0.54), lwd=2) 
+        
+        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.85,0.75,0.54), lwd=2) 
+        
+        
+        # model mean line for SWC > 0.33  
+        
+        
+        polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
+                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,0.5),
+                border=NA)
+        polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
+                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.55,0.5),
+                border=NA)
+        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2) 
+        
+        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2)       
 dev.off()
 
 hist(soilMod$SWC_12[soilMod$locID==1])
 
-plotS <- soilMod %>% filter(locID == 5 & SWC_12 <= 0.33)
-plotS2 <- soilMod %>% filter(locID == 5 & SWC_12 > 0.33)
-plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
-     xlab= " ", ylab=" ", axes=FALSE)
-points(plotS$aveT, plotS$Tsoil_6,  pch=19, col="tomato3")
-points(plotS2$aveT, plotS2$Tsoil_6,  pch=19, col="royalblue3")
-axis(side=1, seq(-20,25,by=5))
 
 
 
