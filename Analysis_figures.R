@@ -41,6 +41,15 @@ tomstDay <- tomst25
 airDay <- weatherDay %>%
   select(doy, year, aveT, maxT, minT)
 
+ggplot(weatherDay, aes(aveT, SolRad))+
+  geom_point()
+cor(weatherDay$aveT,weatherDay$SolRad, use="pairwise")
+
+ggplot(weatherDay, aes(aveT, VPDd))+
+  geom_point()
+cor(weatherDay$aveT,weatherDay$VPDd, use="pairwise")
+
+
 soilAll <- left_join(tomstDay, airDay, by=c("year","doy"))
 
 soilAll$TempDiff <- soilAll$Tsoil_6 - soilAll$aveT 
@@ -628,7 +637,7 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
                 border=NA)
         points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.85,0.58,0.39,), lwd=2) 
         
-        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.58,0.79,0.92), lwd=2) 
+        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.85,0.58,0.39), lwd=2) 
         
         
         # model mean line for SWC > 0.33  
@@ -685,12 +694,12 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2)       
 dev.off()
 
-hist(soilMod$SWC_12[soilMod$locID==1])
 
 
 
 
-
+hist(soilMod$Tsoil_6[soilMod$modforestID==5&soilMod$swID == 1])
+hist(soilMod$Tsoil_6[soilMod$modforestID==5&soilMod$swID == 2])
 
 ################# Supplement: -----
 
@@ -723,4 +732,7 @@ mtext(yxSN, side=4, at=precipRescale(yxSN,snMax,yl2,yh2), line = lyax, cex=cll, 
 axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
 mtext("Surface temperature", side=2, line=lly1, cex=labll)
 mtext(expression(paste("(",degree,"C)")), side=2, line=lly2, cex=labll)
+
+
+
 
