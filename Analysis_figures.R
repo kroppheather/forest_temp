@@ -13,7 +13,8 @@
 library(dplyr)
 library(lubridate)
 library(ggplot2)
-library(tidyr)
+library(rjags)
+library(MCMCvis)
 
 dirComp <- c("G:/My Drive/research/projects",
              "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects")
@@ -24,16 +25,6 @@ source("/Users/hkropp/Documents/GitHub/forest_temp/weather.r")
 
 plotDir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/data_analysis"
 
-
-##### read in additional site and canopy data ----
-
-
-SpeciesInfo <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/canopy/speciesID.csv")
-forestInventory <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/canopy/HCEF forest inventory data 25.csv")
-
-# model output index 
-modDir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model"
-
 ##### aggregate all data to daily level and join with weather ----
 
 tomstDay <- tomst25
@@ -41,21 +32,11 @@ tomstDay <- tomst25
 airDay <- weatherDay %>%
   select(doy, year, aveT, maxT, minT)
 
-ggplot(weatherDay, aes(aveT, SolRad))+
-  geom_point()
-cor(weatherDay$aveT,weatherDay$SolRad, use="pairwise")
-
-ggplot(weatherDay, aes(aveT, VPDd))+
-  geom_point()
-cor(weatherDay$aveT,weatherDay$VPDd, use="pairwise")
-
-
 soilAll <- left_join(tomstDay, airDay, by=c("year","doy"))
 
 soilAll$TempDiff <- soilAll$Tsoil_6 - soilAll$aveT 
 soilAll$date <- as.Date(soilAll$doy-1, origin=paste0(soilAll$year, "-01-01"))
 
-soilAll$VWC_f <- ifelse(soilAll$Tsoil_6 <0,NA, soilAll$SWC_12)
 
 weatherDay$date <- as.Date(weatherDay$doy-1, origin=paste0(weatherDay$year, "-01-01"))
 weatherJoin <- weatherDay %>%
@@ -74,25 +55,25 @@ freezeCheck<- soilMet %>%
   filter(freezeSoil == 1)
 # get all freeze events
 freezeEvent <- c(1)
-  for(i in 2:nrow(freezeCheck)){
-    if(freezeCheck$location[i-1] == freezeCheck$location[i] &
-      freezeCheck$year[i-1] == freezeCheck$year[i] & 
-      freezeCheck$doy[i-1] == (freezeCheck$doy[i]-1)){
-      freezeEvent[i] <- freezeEvent[i-1]
-      
-    }else{
-      freezeEvent[i] <-freezeEvent[i-1]+1}
-     
-  }
+for(i in 2:nrow(freezeCheck)){
+  if(freezeCheck$location[i-1] == freezeCheck$location[i] &
+     freezeCheck$year[i-1] == freezeCheck$year[i] & 
+     freezeCheck$doy[i-1] == (freezeCheck$doy[i]-1)){
+    freezeEvent[i] <- freezeEvent[i-1]
+    
+  }else{
+    freezeEvent[i] <-freezeEvent[i-1]+1}
+  
+}
 # label start of an event
 freezeStart <- c(1)
-  for(i in 2:nrow(freezeCheck)){
-    if(freezeEvent[i-1]!=freezeEvent[i]){
-      freezeStart[i] <- 1
-    }else{
-      freezeStart[i] <- 0
-    }
+for(i in 2:nrow(freezeCheck)){
+  if(freezeEvent[i-1]!=freezeEvent[i]){
+    freezeStart[i] <- 1
+  }else{
+    freezeStart[i] <- 0
   }
+}
 
 # get the day before the freeze
 freezeLastDay <-  freezeCheck$doy[1]-1
@@ -121,43 +102,116 @@ freezeCheck$freezeLastDayYear <- freezeLastDayYear
 freezeCheck$freezeLastDay <- freezeLastDay
 
 
-soilSub <- soilMet %>%
-  filter(doy==freezeCheck$freezeLastDay[1] & year==freezeCheck$freezeLastDayYear[1] &
-           location == freezeCheck$location[1])
 
-freezeFill <- numeric()
-for(i in 1:nrow(freezeCheck)){
-  soilSub <- soilMet %>%
-    filter(doy==freezeCheck$freezeLastDay[i]& year==freezeCheck$freezeLastDayYear[i] &
-             location == freezeCheck$location[i])
-  freezeFill[i] <- soilSub$SWC_12
-}
-freezeCheck$lastVWC <- freezeFill
 
-freezeJoin <- freezeCheck %>%
-  select(location,year,doy,freezeEvent, freezeStart, lastVWC)
-
-soilMet <- left_join(soilMet, freezeJoin, by=c("location","year","doy"))
-
-soilMet$VWC_gap <- ifelse(soilMet$freezeSoil == 1, soilMet$lastVWC, soilMet$SWC_12)
 # use water year starting Oct 1 2023
 soilDat <- soilMet %>%
   filter(DD>=2022.747)
 
 soilDat$locID <- ifelse(soilDat$location == "maple-beech", 1, #Deciduous forest
-                  ifelse(soilDat$location == "hemlock sapflow", 2, #Conifer-deciduous forest
-                  ifelse(soilDat$location == "Spruce RG09", 3, #Conifer monoculture
-                  ifelse(soilDat$location == "Buckthorn RG03", 4, #Invasive scrub
-                  ifelse(soilDat$location == "Rogers reforestation", 5,NA))))) #Reforestation field
+                        ifelse(soilDat$location == "hemlock sapflow", 2, #Conifer-deciduous forest
+                               ifelse(soilDat$location == "Spruce RG09", 3, #Conifer monoculture
+                                      ifelse(soilDat$location == "Buckthorn RG03", 4, #Invasive scrub
+                                             ifelse(soilDat$location == "Rogers reforestation", 5,NA))))) #Reforestation field
 
-# count up how many missing gap filled precip observations
-weatherDay$DD <- weatherDay$year + ((weatherDay$doy-1)/ifelse(leap_year(weatherDay$year),366,365))
-PrecipCount <- weatherDay %>%
-  select(year,DD,Precip_gap) %>%
-  filter(DD >=2023.747) %>%
-  na.omit() %>%
-  group_by(year) %>%
-  summarize(ncount = n())
+#remove observations with missing air temp
+
+soilMod <- soilDat %>%
+  filter(is.na(aveT) == FALSE)
+# create ID for time periods below freezing
+soilMod$freezeModID <- ifelse(soilMod$aveT <= 0, 1,2) # 1 below or at freezing
+# create ID for forest type and freezing time period
+soilMod$modforestID <- ifelse(soilMod$freezeModID == 1, soilMod$locID,
+                              soilMod$locID+5)
+# ID if swc is above or below field capacity
+soilMod$swID <- ifelse(soilMod$SWC_12 > 0.33,2,1)
+# create snow ID
+soilMod$snowID <- ifelse(soilMod$SNWD > 20, 2,1)
+
+soilMod$snowWaterID <- ifelse(soilMod$swID == 1 & soilMod$snowID==1, 1, #no snow plus swc below fc
+                              ifelse(soilMod$swID == 2 & soilMod$snowID==1, 2, #no snow plus swc above fc
+                                     ifelse(soilMod$swID == 1 & soilMod$snowID==2, 3, #snow > 5 plus swc below fc
+                                            ifelse(soilMod$swID == 2 & soilMod$snowID==2, 4, NA)))) # snow > 5 plus swc abov fc
+
+
+ggplot(soilMod %>% filter(modforestID == 2), aes(aveT, Tsoil_6,color=as.factor(snowWaterID)))+
+  geom_point()
+
+
+ggplot(soilMod %>% filter(modforestID == 2), aes(aveT, Tsoil_6,color=as.factor(snowID)))+
+  geom_point()
+ggplot(soilMod %>% filter(modforestID == 2), aes(aveT, Tsoil_6,color=as.factor(swID)))+
+  geom_point()
+
+ggplot(soilMod %>% filter(locID == 1 & snowID == 1), aes(aveT, Tsoil_6,color=as.factor(swID)))+
+  geom_point()
+
+ggplot(soilMod %>% filter(locID == 1 & snowID == 2), aes(aveT, Tsoil_6,color=as.factor(swID)))+
+  geom_point()
+
+
+ggplot(soilMod %>% filter(locID == 2 & snowID == 1), aes(aveT, Tsoil_6,color=as.factor(swID)))+
+  geom_point()
+
+ggplot(soilMod %>% filter(locID == 2 & snowID == 2), aes(aveT, Tsoil_6,color=as.factor(swID)))+
+  geom_point()
+
+
+ggplot(soilMod %>% filter(locID == 3 & snowID == 1), aes(aveT, Tsoil_6,color=as.factor(swID)))+
+  geom_point()
+
+ggplot(soilMod %>% filter(locID == 3 & snowID == 2), aes(aveT, Tsoil_6,color=as.factor(swID)))+
+  geom_point()
+
+ggplot(soilMod %>% filter(locID == 4 & snowID == 1), aes(aveT, Tsoil_6,color=as.factor(swID)))+
+  geom_point()
+
+ggplot(soilMod %>% filter(locID == 4 & snowID == 2), aes(aveT, Tsoil_6,color=as.factor(swID)))+
+  geom_point()
+
+ggplot(soilMod %>% filter(locID == 5 & snowID == 1), aes(aveT, Tsoil_6,color=as.factor(swID)))+
+  geom_point()
+
+ggplot(soilMod %>% filter(locID == 5 & snowID == 2), aes(aveT, Tsoil_6,color=as.factor(swID)))+
+  geom_point()
+
+
+ggplot(soilMod %>% filter(locID == 5 & snowID == 1), aes(aveT, Tsoil_6,color=SWC_12))+
+  geom_point()
+
+ggplot(soilMod %>% filter(locID == 5 & snowID == 2), aes(aveT, Tsoil_6,color=as.factor(swID)))+
+  geom_point()
+
+
+ggplot(soilMod %>% filter(modforestID == 2 & snowWaterID >= 3), aes(aveT, Tsoil_6,color=as.factor(snowWaterID)))+
+  geom_point()
+
+obsCount <- soilMod %>%
+  group_by(modforestID, snowWaterID) %>%
+  summarize(nons=n())
+
+# create ID table
+soilIDs <- soilMod %>%
+  ungroup %>%
+  select(location, locID, freezeModID, modforestID) %>%
+  distinct()
+
+soilCheck <- soilMod %>%
+  filter(locID == 5)
+
+ggplot(soilCheck, aes(aveT, SWC_12))+
+  geom_point()
+
+ggplot(soilCheck, aes(aveT, Tsoil_6))+
+  geom_point()
+
+
+ggplot(soilCheck %>% filter(modforestID==5), aes(aveT, Tsoil_6,color=as.factor(swID)))+
+  geom_point()
+
+check1 <- soilCheck %>% filter(modforestID==5)
+
+check1 <- soilMod %>% filter(modforestID==2)
 #missing 3 days of precip in 2024
 # no missing days other years
 
