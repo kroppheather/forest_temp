@@ -5,6 +5,7 @@ library(ggplot2)
 library(rjags)
 library(MCMCvis)
 
+
 dirComp <- c("G:/My Drive/research/projects",
              "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects")
 compID <- 2
@@ -101,63 +102,27 @@ soilDat$locID <- ifelse(soilDat$location == "maple-beech", 1, #Deciduous forest
                         ifelse(soilDat$location == "hemlock sapflow", 2, #Conifer-deciduous forest
                                ifelse(soilDat$location == "Spruce RG09", 3, #Conifer monoculture
                                       ifelse(soilDat$location == "Buckthorn RG03", 4, #Invasive scrub
-                                        ifelse(soilDat$location == "Rogers reforestation", 5,NA))))) #Reforestation field
+                                             ifelse(soilDat$location == "Rogers reforestation", 5,NA))))) #Reforestation field
 
 #remove observations with missing air temp
 
 soilMod <- soilDat %>%
   filter(is.na(aveT) == FALSE)
 # create ID for time periods below freezing
-
-
+soilMod$freezeModID <- ifelse(soilMod$aveT <= 0, 1,2) # 1 below or at freezing
+# create ID for forest type and freezing time period
+soilMod$modforestID <- ifelse(soilMod$freezeModID == 1, soilMod$locID,
+                              soilMod$locID+5)
 # ID if swc is above or below field capacity
 soilMod$swID <- ifelse(soilMod$SWC_12 > 0.33,2,1)
 # create snow ID
-soilMod$snowID <- ifelse(soilMod$SNWD > 10, 2,1)
- 
-# remove days with missing snow data
-soilMod <- soilMod %>%
-  filter(is.na(SNWD) == FALSE)
+soilMod$snowID <- ifelse(soilMod$SNWD > 20, 2,1)
 
+soilMod$snowWaterID <- ifelse(soilMod$swID == 1 & soilMod$snowID==1, 1, #no snow plus swc below fc
+                              ifelse(soilMod$swID == 2 & soilMod$snowID==1, 2, #no snow plus swc above fc
+                                     ifelse(soilMod$swID == 1 & soilMod$snowID==2, 3, #snow > 5 plus swc below fc
+                                            ifelse(soilMod$swID == 2 & soilMod$snowID==2, 4, NA)))) # snow > 5 plus swc abov fc
 
-
-# create ID for forest type and freezing time period
-soilMod$modforestID <- ifelse(soilMod$swID == 1, soilMod$locID,
-                              soilMod$locID+5)
-
-soilSnow <- soilMod %>%
-  filter(snowID == 2)
-soilNoSnow <- soilMod %>%
-  filter(snowID == 1)  
-
-mod_swloc <-lm(soilNoSnow$Tsoil_6~soilNoSnow$aveT*as.factor(soilNoSnow$modforestID))
-summary(mod_swloc)
-
-qqnorm(mod_swloc$residuals)
-qqline(mod_swloc$residuals)
-
-plot(soilNoSnow$aveT,mod_swloc$residuals)
-
-
-smod_swloc <-lm(soilSnow$Tsoil_6~soilSnow$aveT*as.factor(soilSnow$modforestID))
-summary(smod_swloc)
-
-qqnorm(smod_swloc$residuals)
-qqline(smod_swloc$residuals)
-
-SoilLoc1 <- soilNoSnow %>% filter(locID == 1)
-modTest <- lm(SoilLoc1$Tsoil_6 ~ SoilLoc1$aveT*as.factor(SoilLoc1$swID))
-summary(modTest)
-qqnorm(modTest$residuals)
-qqline(modTest$residuals)
-
-plot(soilSnow$aveT,smod_swloc$residuals)
-
-ggplot(soilSnow, aes(aveT, Tsoil_6,color=as.factor(modforestID)))+
-  geom_point()
-
-ggplot(soilNoSnow %>% filter(locID ==1), aes(aveT, Tsoil_6,color=as.factor(modforestID)))+
-  geom_point()
 
 ggplot(soilMod %>% filter(modforestID == 2), aes(aveT, Tsoil_6,color=as.factor(snowWaterID)))+
   geom_point()
@@ -237,6 +202,7 @@ ggplot(soilCheck %>% filter(modforestID==5), aes(aveT, Tsoil_6,color=as.factor(s
 check1 <- soilCheck %>% filter(modforestID==5)
 
 check1 <- soilMod %>% filter(modforestID==2)
+
 
 
 ############### set up model ---------
