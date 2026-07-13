@@ -107,172 +107,71 @@ soilDat$locID <- ifelse(soilDat$location == "maple-beech", 1, #Deciduous forest
 #remove observations with missing air temp
 
 soilMod <- soilDat %>%
-  filter(is.na(aveT) == FALSE)
+  filter(is.na(aveT) == FALSE) %>%
+  filter(is.na(SNWD) == FALSE)
 # create ID for time periods below freezing
 soilMod$freezeModID <- ifelse(soilMod$aveT <= 0, 1,2) # 1 below or at freezing
 # create ID for forest type and freezing time period
 soilMod$modforestID <- ifelse(soilMod$freezeModID == 1, soilMod$locID,
                               soilMod$locID+5)
+
+hist(soilMod$SNWD)
 # ID if swc is above or below field capacity
 soilMod$swID <- ifelse(soilMod$SWC_12 > 0.33,2,1)
 # create snow ID
-soilMod$snowID <- ifelse(soilMod$SNWD > 20, 2,1)
+# threshold for low snow vs high snow
+# Zhang, H., Yuan, N., Ma, Z., & Huang, Y. (2021). Understanding the soil temperature variability at different depths: Effects of surface air temperature, snow cover, and the soil memory. Advances in Atmospheric Sciences, 38(3), 493-503.
+# found that 80 cm was a threshold for air temps affecting soil temperature in shallow depths, but different location.
+# setting threshold to 5 cm since there may be variability across sites
+# measurements in whole inches from NOAA coop so 72 would be measurement at 3 inches
 
-soilMod$snowWaterID <- ifelse(soilMod$swID == 1 & soilMod$snowID==1, 1, #no snow plus swc below fc
-                              ifelse(soilMod$swID == 2 & soilMod$snowID==1, 2, #no snow plus swc above fc
-                                     ifelse(soilMod$swID == 1 & soilMod$snowID==2, 3, #snow > 5 plus swc below fc
-                                            ifelse(soilMod$swID == 2 & soilMod$snowID==2, 4, NA)))) # snow > 5 plus swc abov fc
-
-
-ggplot(soilMod %>% filter(modforestID == 2), aes(aveT, Tsoil_6,color=as.factor(snowWaterID)))+
-  geom_point()
-
-
-ggplot(soilMod %>% filter(modforestID == 2), aes(aveT, Tsoil_6,color=as.factor(snowID)))+
-  geom_point()
-ggplot(soilMod %>% filter(modforestID == 2), aes(aveT, Tsoil_6,color=as.factor(swID)))+
-  geom_point()
-
-ggplot(soilMod %>% filter(locID == 1 & snowID == 1), aes(aveT, Tsoil_6,color=as.factor(swID)))+
-  geom_point()
-
-ggplot(soilMod %>% filter(locID == 1 & snowID == 2), aes(aveT, Tsoil_6,color=as.factor(swID)))+
-  geom_point()
-
-
-ggplot(soilMod %>% filter(locID == 2 & snowID == 1), aes(aveT, Tsoil_6,color=as.factor(swID)))+
-  geom_point()
-
-ggplot(soilMod %>% filter(locID == 2 & snowID == 2), aes(aveT, Tsoil_6,color=as.factor(swID)))+
-  geom_point()
-
-
-ggplot(soilMod %>% filter(locID == 3 & snowID == 1), aes(aveT, Tsoil_6,color=as.factor(swID)))+
-  geom_point()
-
-ggplot(soilMod %>% filter(locID == 3 & snowID == 2), aes(aveT, Tsoil_6,color=as.factor(swID)))+
-  geom_point()
-
-ggplot(soilMod %>% filter(locID == 4 & snowID == 1), aes(aveT, Tsoil_6,color=as.factor(swID)))+
-  geom_point()
-
-ggplot(soilMod %>% filter(locID == 4 & snowID == 2), aes(aveT, Tsoil_6,color=as.factor(swID)))+
-  geom_point()
-
-ggplot(soilMod %>% filter(locID == 5 & snowID == 1), aes(aveT, Tsoil_6,color=as.factor(swID)))+
-  geom_point()
-
-ggplot(soilMod %>% filter(locID == 5 & snowID == 2), aes(aveT, Tsoil_6,color=as.factor(swID)))+
-  geom_point()
-
-
-ggplot(soilMod %>% filter(locID == 5 & snowID == 1), aes(aveT, Tsoil_6,color=SWC_12))+
-  geom_point()
-
-ggplot(soilMod %>% filter(locID == 5 & snowID == 2), aes(aveT, Tsoil_6,color=as.factor(swID)))+
-  geom_point()
-
-
-ggplot(soilMod %>% filter(modforestID == 2 & snowWaterID >= 3), aes(aveT, Tsoil_6,color=as.factor(snowWaterID)))+
-  geom_point()
-
-obsCount <- soilMod %>%
-  group_by(modforestID, snowWaterID) %>%
-  summarize(nons=n())
+soilMod$snowID <- ifelse(soilMod$SNWD > 72, 2,1)
+soilMod$regID <- ifelse(soilMod$snowID == 1 & soilMod$freezeModID == 1, 1, # freezing temps low/no snow
+                  ifelse(soilMod$snowID == 1 & soilMod$freezeModID == 2, 2, # above freezing temps low/now snow
+                  ifelse(soilMod$snowID == 2, 3, NA))) # snow 
 
 # create ID table
 soilIDs <- soilMod %>%
   ungroup %>%
-  select(location, locID, freezeModID, modforestID) %>%
+  select(location, locID, freezeModID, snowID, regID, swID) %>%
   distinct()
 
-soilCheck <- soilMod %>%
-  filter(locID == 1)
 
-
-ggplot(soilMod %>% filter(snowID==1&locID==1), aes(aveT, Tsoil_6, color=as.factor(snowWaterID)))+
+ggplot(soilMod %>% filter(locID ==1), aes(aveT,Tsoil_6, color=snowID))+
   geom_point()
-
-ggplot(soilMod %>% filter(snowID==1&locID==2), aes(aveT, Tsoil_6, color=as.factor(snowWaterID)))+
-  geom_point()
-
-ggplot(soilMod %>% filter(snowID==1&locID==3), aes(aveT, Tsoil_6, color=as.factor(snowWaterID)))+
-  geom_point()
-
-ggplot(soilMod %>% filter(snowID==1&locID==4), aes(aveT, Tsoil_6, color=as.factor(snowWaterID)))+
-  geom_point()
-
-ggplot(soilMod %>% filter(snowID==1&locID==5), aes(aveT, Tsoil_6, color=as.factor(snowWaterID)))+
-  geom_point()
-
-lm_test <- lm(Tsoil_6 ~ aveT, data=soilMod %>% filter(snowID==1&locID==5&swID==2))
-summary(lm_test)
-
-qqnorm(lm_test$residuals)
-qqline(lm_test$residuals)
-plot()
-
-plot(Tsoil_6 ~ aveT, data=soilMod %>% filter(snowID==1&locID==5&swID==2))
-abline(lm_test)
-
-ggplot(soilCheck%>% filter(snowID==2), aes(aveT, Tsoil_6, color=as.factor(snowWaterID)))+
-  geom_point()
-
-
-
-ggplot(soilCheck %>% filter(modforestID==5), aes(aveT, Tsoil_6,color=as.factor(swID)))+
-  geom_point()
-
-check1 <- soilCheck %>% filter(modforestID==5)
-
-check1 <- soilMod %>% filter(modforestID==2)
-
-
-
 ############### set up model ---------
 # data
 dataList <- list(Nobs= nrow(soilMod),
                  s_temp = soilMod$Tsoil_6,
-                 modforestID = soilMod$modforestID,
                  forestID = soilMod$locID,
                  air_temp = soilMod$aveT,
+                 regID = soilMod$regID,
                  swID = soilMod$swID,
-                 Nmodforest = nrow(soilIDs),
-                NSW=2,
+                 snowID = soilMod$snowID,
+                 Nsnow = 2,
+                  NSW=2,
                  Nforest=5,
                  plot_tempFreeze = seq(-20,0, length.out=41),
                  plot_tempWarm = seq(0, 30, length.out=61),
-                plotLengthFreeze=41, plotLengthWarm=61)
+                plotLengthFreeze=41, plotLengthWarm=61,
+                plot_tempSnow = seq(-21,10, length.out=100),plotLengthSnow =100
+                )
                  
 
-parms <- c("sig_temp"," beta_naught","beta","rep_temp",
-           "mu_temp_freeze",
-           "mu_temp_warm" )
 
-inits <- list(list(sig_temp = rep(1,nrow(soilIDs)),
-                   beta_naught= matrix(rep(0,10),ncol=2),
-                   beta=matrix(c(
-                          rep(0,10),
-                          rep(0,10)), ncol=2, byrow=TRUE)),
-              list(sig_temp = rep(5,nrow(soilIDs)),
-                   beta_naught = matrix(rep(1,10),ncol=2),
-                   beta=matrix(c(
-                                 rep(-1,10),
-                                 rep(-1,10)), ncol=2, byrow=TRUE)),
-              list(sig_temp = rep(3,nrow(soilIDs)),
-                   beta_naught=matrix(rep(2,10),ncol=2),
-                     beta=matrix(c(
-                                 rep(1,10),
-                                 rep(1,10)), ncol=2, byrow=TRUE)))
+parms <- c("sig_s"," beta_naught","beta","rep_s",
+           "mu_temp_freeze",
+           "mu_temp_warm", "mu_temp_snow" )
+
 
 
 temp_mod <- jags.model(file="/Users/hkropp/Documents/GitHub/forest_temp/soil_temp_model.r",
-                                            data=dataList, inits=inits,
+                                            data=dataList,
                                             n.adapt=10000,
                                            n.chains=3)
 temp_sample <- coda.samples(temp_mod, variable.names=parms, n.iter=90000, thin=30)
 
-MCMCtrace(temp_sample, params=c("sig_temp","beta_naught", "beta"),
+MCMCtrace(temp_sample, params=c("sig_s","beta_naught", "beta"),
                      pdf=TRUE, 
                     wd="/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model",
                      filename="temp_model.pdf")
@@ -280,10 +179,11 @@ beta_n_out <- MCMCsummary(temp_sample,params=c( "beta_naught"))
 beta_out <- MCMCsummary(temp_sample,params=c( "beta"))
 beta_out
 beta_out$p_name <- row.names(beta_out)
-beta_out$modforestID <- rep(seq(1,10), times=2)
-beta_out$swID <- rep(seq(1,2), each=10)
-sig_out <- MCMCsummary(temp_sample,params=c( "sig_temp"))
-rep_temp <- MCMCsummary(temp_sample,params=c( "rep_temp"))
+beta_out$forestID <- rep(seq(1,5), times=6)
+beta_out$swID <- rep(c(1,1,1,1,1,2,2,2,2,2), times=3)
+beta_out$regID <- rep(c(1,2,3), each=10)
+sig_out <- MCMCsummary(temp_sample,params=c( "sig_s"))
+rep_temp <- MCMCsummary(temp_sample,params=c( "rep_s"))
 
 
 model_comp <- data.frame(actual_temp = soilMod$Tsoil_6,
