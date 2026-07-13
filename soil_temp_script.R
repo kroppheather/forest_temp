@@ -187,13 +187,37 @@ soilIDs <- soilMod %>%
   distinct()
 
 soilCheck <- soilMod %>%
-  filter(locID == 5)
+  filter(locID == 1)
 
-ggplot(soilCheck, aes(aveT, SWC_12))+
+
+ggplot(soilMod %>% filter(snowID==1&locID==1), aes(aveT, Tsoil_6, color=as.factor(snowWaterID)))+
   geom_point()
 
-ggplot(soilCheck, aes(aveT, Tsoil_6))+
+ggplot(soilMod %>% filter(snowID==1&locID==2), aes(aveT, Tsoil_6, color=as.factor(snowWaterID)))+
   geom_point()
+
+ggplot(soilMod %>% filter(snowID==1&locID==3), aes(aveT, Tsoil_6, color=as.factor(snowWaterID)))+
+  geom_point()
+
+ggplot(soilMod %>% filter(snowID==1&locID==4), aes(aveT, Tsoil_6, color=as.factor(snowWaterID)))+
+  geom_point()
+
+ggplot(soilMod %>% filter(snowID==1&locID==5), aes(aveT, Tsoil_6, color=as.factor(snowWaterID)))+
+  geom_point()
+
+lm_test <- lm(Tsoil_6 ~ aveT, data=soilMod %>% filter(snowID==1&locID==5&swID==2))
+summary(lm_test)
+
+qqnorm(lm_test$residuals)
+qqline(lm_test$residuals)
+plot()
+
+plot(Tsoil_6 ~ aveT, data=soilMod %>% filter(snowID==1&locID==5&swID==2))
+abline(lm_test)
+
+ggplot(soilCheck%>% filter(snowID==2), aes(aveT, Tsoil_6, color=as.factor(snowWaterID)))+
+  geom_point()
+
 
 
 ggplot(soilCheck %>% filter(modforestID==5), aes(aveT, Tsoil_6,color=as.factor(swID)))+
