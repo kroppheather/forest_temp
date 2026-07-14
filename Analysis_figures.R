@@ -167,20 +167,35 @@ PrecipCount <- weatherDay %>%
 
 
 soilMod <- soilDat %>%
-  filter(is.na(aveT) == FALSE)
+  filter(is.na(aveT) == FALSE) %>%
+  filter(is.na(SNWD) == FALSE)
 # create ID for time periods below freezing
 soilMod$freezeModID <- ifelse(soilMod$aveT <= 0, 1,2) # 1 below or at freezing
 # create ID for forest type and freezing time period
 soilMod$modforestID <- ifelse(soilMod$freezeModID == 1, soilMod$locID,
                               soilMod$locID+5)
+
+hist(soilMod$SNWD)
 # ID if swc is above or below field capacity
 soilMod$swID <- ifelse(soilMod$SWC_12 > 0.33,2,1)
+# create snow ID
+# threshold for low snow vs high snow
+# Zhang, H., Yuan, N., Ma, Z., & Huang, Y. (2021). Understanding the soil temperature variability at different depths: Effects of surface air temperature, snow cover, and the soil memory. Advances in Atmospheric Sciences, 38(3), 493-503.
+# found that 80 cm was a threshold for air temps affecting soil temperature in shallow depths, but different location.
+# setting threshold to 5 cm since there may be variability across sites
+# measurements in whole inches from NOAA coop so 72 would be measurement at 3 inches
+
+soilMod$snowID <- ifelse(soilMod$SNWD > 72, 2,1)
+soilMod$regID <- ifelse(soilMod$snowID == 1 & soilMod$freezeModID == 1, 1, # freezing temps low/no snow
+                        ifelse(soilMod$snowID == 1 & soilMod$freezeModID == 2, 2, # above freezing temps low/now snow
+                               ifelse(soilMod$snowID == 2, 3, NA))) # snow 
+
 # create ID table
 soilIDs <- soilMod %>%
   ungroup %>%
-  select(location, locID, freezeModID, modforestID) %>%
-  distinct()%>%
-  arrange(modforestID)
+  select(location, locID, freezeModID, snowID, regID, swID) %>%
+  distinct()
+
 
 ######## color scheme for figures ----
 locLabel <- c("Deciduous forest",
@@ -455,16 +470,22 @@ PlotTable <- left_join(PlotTable, SpeciesTable, by="Plot")
 
 
 ####### Figure : temperature model and patterns ----
+#index order: forest, swID, snowID
+#snowID: 1= no/low snow
+#swID 1= at or below fc, 2= above fc
 beta_n <- read.csv(paste0(modDir, "/beta_n_out.csv"))
+beta_n$locID <- rep(seq(1,5), times=4)
+beta_n$swID <- rep(c(1,2,1,2), each=5)
+beta_n$snowID <- rep(c(1,2),each=10)
+# regID 1=freezing temps low/no snow, 2=above freezing temps low/now snow, 3= snow
 beta_air <- read.csv(paste0(modDir, "/air_slope.csv"))
 
 # for plotting: predicted mu with CI
 
-plotFreeze <- data.frame(temp_freeze = seq(-20,0, length.out=41),
-                         swc_freeze = seq(0.1,0.55, length.out=41))
+plotFreeze <- data.frame(temp_freeze = seq(-20,0, length.out=41))
                                                
-plotWarm <- data.frame( temp_warm= seq(0, 30, length.out=61),
-       swc_warm = seq(0.1,0.55,length.out=61))
+plotWarm <- data.frame( temp_warm= seq(0, 30, length.out=61))
+plotSnow <- data.frame( temp_snow=seq(-21,10, length.out=100))
 
 
 mu_temp_freeze <- read.csv(paste0(modDir, "/mu_temp_freeze.csv"))
@@ -481,6 +502,13 @@ mu_temp_warm$IDS <- gsub("mu_temp_warm","",mu_temp_warm$X)
 mu_temp_warms  <- separate_wider_delim(mu_temp_warm, IDS, ",", names=c("repID","locID","swID"))
 mu_temp_warms$locID <- as.numeric( mu_temp_warms$locID )
 mu_temp_warms$swID <- as.numeric(gsub("\\D","", mu_temp_warms$swID ))
+
+mu_temp_snow <- read.csv(paste0(modDir, "/mu_temp_snow.csv"))
+mu_temp_snow$IDS <- gsub("mu_temp_snow","",mu_temp_snow$X)
+
+mu_temp_snow  <- separate_wider_delim(mu_temp_snow, IDS, ",", names=c("repID","locID","swID"))
+mu_temp_snow$locID <- as.numeric( mu_temp_snow$locID )
+mu_temp_snow$swID <- as.numeric(gsub("\\D","", mu_temp_snow$swID ))
 
 wd <- 35
 hd <- 15
