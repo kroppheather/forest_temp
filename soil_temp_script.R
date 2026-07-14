@@ -208,9 +208,11 @@ mu_temp_freeze <- MCMCsummary(temp_sample,params=c( "mu_temp_freeze"))
 
 mu_temp_warm <- MCMCsummary(temp_sample,params=c( "mu_temp_warm"))
 
-
+mu_temp_snow <- MCMCsummary(temp_sample,params=c( "mu_temp_snow"))
 write.csv(mu_temp_freeze, 
           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_temp_freeze.csv")
 
 write.csv(mu_temp_warm, 
           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_temp_warm.csv")
+write.csv(mu_temp_snow, 
+          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/model/mu_temp_snow.csv")
