@@ -517,33 +517,59 @@ mu_temp_snow$locID <- as.numeric( mu_temp_snow$locID )
 mu_temp_snow$swID <- as.numeric(gsub("\\D","", mu_temp_snow$swID ))
 
 
-
+########## plot 2 graphing ----
 
 
 wd <- 10
 hd <- 10
 
-xl1 <- -25
+xl1 <- -20
 xh1 <- 30
-yl1 <- -5
+yl1 <- -6
 yh1 <- 25
 
-xl2 <- -25
+xl2 <- -20
 xh2 <- 10
 yl2 <- -5
 yh2 <- 10
 
 # snow free/low snow x
-tx1 <- seq(-25,30,by=5)
-tx2 <- seq(-25,10,by=5)
+tx1 <- seq(-20,30,by=10)
+tx2 <- seq(-20,10,by=10)
+ty1 <- seq(-5,25,by=5)
+ty2 <- seq(-5,10, by = 5)
+#size of axis ticks
+tcx <- 3
+#size of tick labels
+cll <- 2
+#line of y axis labels
+yll <- 2
+xll <- 2
+
+# line for axis title
+lly1 <- -5
+llx1 <- -5
+llx2 <- 2
+# size for axis title
+labll <- 3
+labll2 <- 2
 # size of points
 pcx <- 1.5
 # transparency of points
-tp <- 1
+tp <- 0.8
 # transparency of CI
-tci <- 0.65
+tci <- 0.55
 # line thickness regression
 lwr <- 4.5
+# coordinates of the text panel label
+cx <- -17.5
+cy1 <- 23.5
+cy2 <- 9.25
+# size of text label
+ptc <- 3
+# legend size
+cxl <- 2
+
 
 png(paste0(plotDir,"/mod_data.png"), width = 25, height = 55, units = "cm", res=300)
 layout(matrix(seq(1,10),ncol=2, byrow=FALSE), width=rep(lcm(wd),2),height=rep(lcm(hd),5))
@@ -561,7 +587,7 @@ mfr2 <- mu_temp_freezes %>% filter(locID == 1 & swID == 2)
 mwr1 <- mu_temp_warms %>% filter(locID == 1 & swID == 1)
 mwr2 <- mu_temp_warms %>% filter(locID == 1 & swID == 2)
 # gray green rgb(0.58,0.63,0.53,0.25)
-par(mai=c(0.25,0,0,0))
+par(mai=c(0.75,0.75,0,0))
 plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
   xlab= " ", ylab=" ", axes=FALSE)
   points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.49,0.63,0.3,tp), cex=pcx)
@@ -597,7 +623,19 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
         points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr ,
                lty=2-beta_air$sigID[beta_air$forestID == 1 & beta_air$swID == 2 & beta_air$regID ==2])
+      #axis
+        axis(2, at= ty1,labels=FALSE, cex=tcx)
+        mtext(ty1, side=2, at=ty1, line = yll, cex=cll, las=2)
         
+        axis(1, at= tx1,labels=FALSE, cex=tcx)
+        #mtext(tx1, side=2, at=tx1, line = xll, cex=cll, las=2)
+        mtext("No/Low Snow", side=3, line=llx2, cex=labll2)
+        
+        text(cx,cy1,"A", cex=ptc)
+        
+        legend("bottomright",c("Decid.forest <= fc","Decid. forest > fc"),
+               pch=16, col=c(rgb(0.49,0.63,0.3,tp),rgb(0.5,0.5,0.5,tp)), bty="n",
+               cex=cxl)
         
         
         # location 2
@@ -609,7 +647,7 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         mwr1 <- mu_temp_warms %>% filter(locID == 2 & swID == 1)
         mwr2 <- mu_temp_warms %>% filter(locID == 2 & swID == 2)
         # gray green rgb(0.58,0.63,0.53,0.25)
-        par(mai=c(0.25,0,0,0))
+        par(mai=c(0.75,0.75,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
              xlab= " ", ylab=" ", axes=FALSE)
         points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.16,0.42,0.22,tp), cex=pcx)
@@ -646,6 +684,20 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr ,
                lty= 2-beta_air$sigID[beta_air$forestID == 2 & beta_air$swID == 2 & beta_air$regID ==2])
         
+        #axis
+        axis(2, at= ty1,labels=FALSE, cex=tcx)
+        mtext(ty1, side=2, at=ty1, line = yll, cex=cll, las=2)
+        
+        axis(1, at= tx1,labels=FALSE, cex=tcx)
+        #mtext(tx1, side=2, at=tx1, line = xll, cex=cll, las=2)
+        
+        legend("bottomright",c("mixed forest <= fc","mixed forest > fc"),
+               pch=16, col=c(rgb(0.16,0.42,0.22,tp),rgb(0.5,0.5,0.5,tp)), bty="n",
+               cex=cxl)
+        
+        text(cx,cy1,"B", cex=ptc)
+        
+        
         # location 3
         plotS1 <- soilMod %>% filter(locID == 3 & swID == 1 & snowID ==1)
         plotS2 <- soilMod %>% filter(locID == 3 & swID == 2 & snowID ==1)
@@ -655,7 +707,7 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         mwr1 <- mu_temp_warms %>% filter(locID == 3 & swID == 1)
         mwr2 <- mu_temp_warms %>% filter(locID == 3 & swID == 2)
         # gray green rgb(0.58,0.63,0.53,0.25)
-        par(mai=c(0.25,0,0,0))
+        par(mai=c(0.75,0.75,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
              xlab= " ", ylab=" ", axes=FALSE)
         points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.58,0.79,0.92,tp), cex=pcx)
@@ -694,6 +746,19 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
         
         
+        #axis
+        axis(2, at= ty1,labels=FALSE, cex=tcx)
+        mtext(ty1, side=2, at=ty1, line = yll, cex=cll, las=2)
+        
+        axis(1, at= tx1,labels=FALSE, cex=tcx)
+        #mtext(tx1, side=2, at=tx1, line = xll, cex=cll, las=2)
+        legend("bottomright",c("conifer <= fc","conifer > fc"),
+               pch=16, col=c(rgb(0.58,0.79,0.92,tp),rgb(0.5,0.5,0.5,tp)), bty="n",
+               cex=cxl)
+        
+        text(cx,cy1,"C", cex=ptc)
+        
+        
         # location 4
         plotS1 <- soilMod %>% filter(locID == 4 & swID == 1 & snowID ==1)
         plotS2 <- soilMod %>% filter(locID == 4 & swID == 2 & snowID ==1)
@@ -703,7 +768,7 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         mwr1 <- mu_temp_warms %>% filter(locID == 4 & swID == 1)
         mwr2 <- mu_temp_warms %>% filter(locID == 4 & swID == 2)
         # gray green rgb(0.58,0.63,0.53,0.25)
-        par(mai=c(0.25,0,0,0))
+        par(mai=c(0.75,0.75,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
              xlab= " ", ylab=" ", axes=FALSE)
         points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.85,0.58,0.39,tp), cex=pcx)
@@ -740,6 +805,21 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
                lty= 2-beta_air$sigID[beta_air$forestID == 4 & beta_air$swID == 2 & beta_air$regID ==2])
         
+        
+        #axis
+        axis(2, at= ty1,labels=FALSE, cex=tcx)
+        mtext(ty1, side=2, at=ty1, line = yll, cex=cll, las=2)
+        
+        axis(1, at= tx1,labels=FALSE, cex=tcx)
+        #mtext(tx1, side=2, at=tx1, line = xll, cex=cll, las=2)
+        
+        legend("bottomright",c("scrub <= fc","scrub > fc"),
+               pch=16, col=c(rgb(0.85,0.58,0.39,tp),rgb(0.5,0.5,0.5,tp)), bty="n",
+               cex=cxl)
+        
+        text(cx,cy1,"D", cex=ptc)
+        
+        
         # location 5
         plotS1 <- soilMod %>% filter(locID == 5 & swID == 1 & snowID ==1)
         plotS2 <- soilMod %>% filter(locID == 5 & swID == 2 & snowID ==1)
@@ -751,7 +831,7 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
  
         
-        par(mai=c(0.25,0,0,0))
+        par(mai=c(0.75,0.75,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
              xlab= " ", ylab=" ", axes=FALSE)
         points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.85,0.75,0.54,tp), cex=pcx)
@@ -789,6 +869,21 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
                lty= 2-beta_air$sigID[beta_air$forestID == 5 & beta_air$swID == 2 & beta_air$regID ==2])       
 
         
+        #axis
+        axis(2, at= ty1,labels=FALSE, cex=tcx)
+        mtext(ty1, side=2, at=ty1, line = yll, cex=cll, las=2)
+        
+        axis(1, at= tx1,labels=FALSE, cex=tcx)
+        mtext(tx1, side=1, at=tx1, line = xll, cex=cll)
+        
+        
+        legend("bottomright",c("meadow <= fc","meadow > fc"),
+               pch=16, col=c(rgb(0.85,0.75,0.54,tp),rgb(0.5,0.5,0.5,tp)), bty="n",
+               cex=cxl)
+        
+        mtext(expression(paste("Soil temperature (",degree,"C)")), side=2, line=lly1, cex=labll, outer=TRUE)
+        text(cx,cy1,"E", cex=ptc)
+        
         ### snow free/low snow # 
         # location 1 
         plotS1 <- soilMod %>% filter(locID == 1 & swID == 1 & snowID ==2)
@@ -798,7 +893,7 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         msr2 <- mu_temp_snow %>% filter(locID == 1 & swID == 2)
 
         # gray green rgb(0.58,0.63,0.53,0.25)
-        par(mai=c(0.25,0,0,0))
+        par(mai=c(0.75,0.75,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
              xlab= " ", ylab=" ", axes=FALSE)
         points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.49,0.63,0.3,tp), cex=pcx)
@@ -823,6 +918,19 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
                lty=2-beta_air$sigID[beta_air$forestID == 1 & beta_air$swID == 2 & beta_air$regID ==3])
         
 
+        #axis
+        axis(2, at= ty2,labels=FALSE, cex=tcx)
+        mtext(ty2, side=2, at=ty2, line = yll, cex=cll, las=2)
+        axis(1, at= tx2,labels=FALSE, cex=tcx)
+        #mtext(tx2, side=1, at=tx2, line = xll, cex=cll)
+        mtext("Snow", side=3, line=llx2, cex=labll2)
+        legend("bottomright",c("Decid.forest <= fc","Decid. forest > fc"),
+               pch=16, col=c(rgb(0.49,0.63,0.3,tp),rgb(0.5,0.5,0.5,tp)), bty="n",
+               cex=cxl)
+        
+        text(cx,cy2,"F", cex=ptc)
+        
+        
         ### snow free/low snow # 
         # location 2 
         plotS1 <- soilMod %>% filter(locID == 2 & swID == 1 & snowID ==2)
@@ -832,7 +940,7 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         msr2 <- mu_temp_snow %>% filter(locID == 2 & swID == 2)
         
         # gray green rgb(0.58,0.63,0.53,0.25)
-        par(mai=c(0.25,0,0,0))
+        par(mai=c(0.75,0.75,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
              xlab= " ", ylab=" ", axes=FALSE)
         points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.16,0.42,0.22,tp), cex=pcx)
@@ -855,6 +963,20 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
                lty=2-beta_air$sigID[beta_air$forestID == 2 & beta_air$swID == 2 & beta_air$regID ==3])
         
         
+        #axis
+        axis(2, at= ty2,labels=FALSE, cex=tcx)
+        mtext(ty2, side=2, at=ty2, line = yll, cex=cll, las=2)
+        axis(1, at= tx2,labels=FALSE, cex=tcx)
+        #mtext(tx2, side=1, at=tx2, line = xll, cex=cll)
+        legend("bottomright",c("mixed forest <= fc","mixed forest > fc"),
+               pch=16, col=c(rgb(0.16,0.42,0.22,tp),rgb(0.5,0.5,0.5,tp)), bty="n",
+               cex=cxl)
+        
+        
+        text(cx,cy2,"G", cex=ptc)
+        
+        
+        
         ### snow free/low snow # 
         # location 3 
         plotS1 <- soilMod %>% filter(locID == 3 & swID == 1 & snowID ==2)
@@ -864,7 +986,7 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         msr2 <- mu_temp_snow %>% filter(locID == 3 & swID == 2)
         
       
-        par(mai=c(0.25,0,0,0))
+        par(mai=c(0.75,0.75,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
              xlab= " ", ylab=" ", axes=FALSE)
         points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.58,0.79,0.92,tp), cex=pcx)
@@ -886,6 +1008,18 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         points(plotSnow$temp_snow, msr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
                lty=2-beta_air$sigID[beta_air$forestID == 3 & beta_air$swID == 2 & beta_air$regID ==3])
         
+        
+        
+        #axis
+        axis(2, at= ty2,labels=FALSE, cex=tcx)
+        mtext(ty2, side=2, at=ty2, line = yll, cex=cll, las=2)
+        axis(1, at= tx2,labels=FALSE, cex=tcx)
+        #mtext(tx2, side=1, at=tx2, line = xll, cex=cll)
+        text(cx,cy2,"H", cex=ptc)
+        legend("bottomright",c("conifer <= fc","conifer > fc"),
+               pch=16, col=c(rgb(0.58,0.79,0.92,tp),rgb(0.5,0.5,0.5,tp)), bty="n",
+               cex=cxl)
+        
         ### snow free/low snow # 
         # location 4 
         plotS1 <- soilMod %>% filter(locID == 4 & swID == 1 & snowID ==2)
@@ -895,7 +1029,7 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         msr2 <- mu_temp_snow %>% filter(locID == 4 & swID == 2)
         
         
-        par(mai=c(0.25,0,0,0))
+        par(mai=c(0.75,0.75,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
              xlab= " ", ylab=" ", axes=FALSE)
         points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.85,0.58,0.39,tp), cex=pcx)
@@ -917,6 +1051,16 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         points(plotSnow$temp_snow, msr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
                lty=2-beta_air$sigID[beta_air$forestID == 4 & beta_air$swID == 2 & beta_air$regID ==3])
         
+        #axis
+        axis(2, at= ty2,labels=FALSE, cex=tcx)
+        mtext(ty2, side=2, at=ty2, line = yll, cex=cll, las=2)
+        axis(1, at= tx2,labels=FALSE, cex=tcx)
+        text(cx,cy2,"I", cex=ptc)
+        
+        legend("bottomright",c("scrub <= fc","scrub > fc"),
+               pch=16, col=c(rgb(0.85,0.58,0.39,tp),rgb(0.5,0.5,0.5,tp)), bty="n",
+               cex=cxl)
+        
         ### snow free/low snow # 
         # location 5 
         plotS1 <- soilMod %>% filter(locID == 5 & swID == 1 & snowID ==2)
@@ -925,7 +1069,7 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         msr1 <- mu_temp_snow %>% filter(locID == 5 & swID == 1)
         msr2 <- mu_temp_snow %>% filter(locID == 5 & swID == 2)
         
-        par(mai=c(0.25,0,0,0))
+        par(mai=c(0.75,0.75,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
              xlab= " ", ylab=" ", axes=FALSE)
         points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.85,0.75,0.54,tp), cex=pcx)
@@ -946,6 +1090,19 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
         points(plotSnow$temp_snow, msr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
                lty=2-beta_air$sigID[beta_air$forestID == 5 & beta_air$swID == 2 & beta_air$regID ==3])
+        
+        
+        #axis
+        axis(2, at= ty2,labels=FALSE, cex=tcx)
+        mtext(ty2, side=2, at=ty2, line = yll, cex=cll, las=2)
+        axis(1, at= tx2,labels=FALSE, cex=tcx)
+        mtext(tx2, side=1, at=tx2, line = xll, cex=cll)
+        text(cx,cy2,"J", cex=ptc)
+        legend("bottomright",c("meadow <= fc","meadow > fc"),
+               pch=16, col=c(rgb(0.85,0.75,0.54,tp),rgb(0.5,0.5,0.5,tp)), bty="n",
+               cex=cxl)
+        
+        mtext(expression(paste("Air temperature (",degree,"C)")), side=1, line=llx1, cex=labll, outer=TRUE)
         
 dev.off()
 
