@@ -216,7 +216,9 @@ locColorst <- c(rgb(126,160,78,100, maxColorValue = 255), # deciduous
                 rgb(217,148,40,100, maxColorValue = 255), # scrub
                 rgb(216,192,138,100, maxColorValue = 255)) # reforestation
 
-
+loc1 <- soilMod %>% filter(locID==1)
+ggplot(soilMod%>% filter(locID==5), aes(Tsurf_15, aveT, color=as.factor(snowID)))+
+  geom_point()
 ####### Figure 1: Met and soil data ----
 singleLoc <- soilDat %>%
   filter(location == "hemlock sapflow")
@@ -478,7 +480,11 @@ beta_n$locID <- rep(seq(1,5), times=4)
 beta_n$swID <- rep(c(1,2,1,2), each=5)
 beta_n$snowID <- rep(c(1,2),each=10)
 # regID 1=freezing temps low/no snow, 2=above freezing temps low/now snow, 3= snow
+
 beta_air <- read.csv(paste0(modDir, "/air_slope.csv"))
+# check for significance
+beta_air$sigID <- ifelse(beta_air$X2.5.<0 & beta_air$X97.5.<0,1,
+                    ifelse(beta_air$X2.5.>0 & beta_air$X97.5.>0,1,0))
 
 # for plotting: predicted mu with CI
 
@@ -510,224 +516,439 @@ mu_temp_snow  <- separate_wider_delim(mu_temp_snow, IDS, ",", names=c("repID","l
 mu_temp_snow$locID <- as.numeric( mu_temp_snow$locID )
 mu_temp_snow$swID <- as.numeric(gsub("\\D","", mu_temp_snow$swID ))
 
-wd <- 35
-hd <- 15
+
+
+
+
+wd <- 10
+hd <- 10
 
 xl1 <- -25
 xh1 <- 30
 yl1 <- -5
 yh1 <- 25
 
-png(paste0(plotDir,"/mod_data.png"), width = 37, height = 77, units = "cm", res=300)
-layout(matrix(c(1,2,3,4,5),ncol=1), width=lcm(wd),height=rep(lcm(hd),5))
-# loc 1: maple beech
-plotS1 <- soilMod %>% filter(locID == 1 & swID == 1)
-plotS2 <- soilMod %>% filter(locID == 1 & swID == 2)
+xl2 <- -25
+xh2 <- 10
+yl2 <- -5
+yh2 <- 10
+
+# snow free/low snow x
+tx1 <- seq(-25,30,by=5)
+tx2 <- seq(-25,10,by=5)
+# size of points
+pcx <- 1.5
+# transparency of points
+tp <- 1
+# transparency of CI
+tci <- 0.65
+# line thickness regression
+lwr <- 4.5
+
+png(paste0(plotDir,"/mod_data.png"), width = 25, height = 55, units = "cm", res=300)
+layout(matrix(seq(1,10),ncol=2, byrow=FALSE), width=rep(lcm(wd),2),height=rep(lcm(hd),5))
+
+# loc 1: maple beech no snow
+plotS1 <- soilMod %>% filter(locID == 1 & swID == 1 & snowID ==1)
+plotS2 <- soilMod %>% filter(locID == 1 & swID == 2 & snowID ==1)
+
+### snow free/low snow # 
+# location 1 
 
 
-# location 1
 mfr1 <- mu_temp_freezes %>% filter(locID == 1 & swID == 1)
 mfr2 <- mu_temp_freezes %>% filter(locID == 1 & swID == 2)
 mwr1 <- mu_temp_warms %>% filter(locID == 1 & swID == 1)
 mwr2 <- mu_temp_warms %>% filter(locID == 1 & swID == 2)
 # gray green rgb(0.58,0.63,0.53,0.25)
+par(mai=c(0.25,0,0,0))
 plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
   xlab= " ", ylab=" ", axes=FALSE)
-  points(plotS1$aveT, plotS1$Tsoil_6, pch=19, col=rgb(0.49,0.63,0.3,0.25))
-  points(plotS2$aveT, plotS2$Tsoil_6, pch=19, col=rgb(0.5,0.5,0.5,0.25))
+  points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.49,0.63,0.3,tp), cex=pcx)
+  points(plotS2$aveT, plotS2$Tsoil_6, pch=16, col=rgb(0.5,0.5,0.5,tp), cex=pcx)
 
       # model mean line for SWC <= 0.33  
  
     
       polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
-              c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.49,0.63,0.3,0.5),
+              c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.49,0.63,0.3,tci),
               border=NA)
       polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
-              c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.49,0.63,0.3,0.5),
+              c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.49,0.63,0.3,tci),
               border=NA)
-      points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.49,0.63,0.3), lwd=2) 
+      points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.49,0.63,0.3), lwd=lwr ,
+             lty=2-beta_air$sigID[beta_air$forestID == 1 & beta_air$swID == 1 & beta_air$regID ==1]) 
     
-        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.49,0.63,0.3), lwd=2) 
+        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.49,0.63,0.3), lwd=lwr ,
+               lty=2-beta_air$sigID[beta_air$forestID == 1 & beta_air$swID == 1 & beta_air$regID ==2]) 
 
 
         # model mean line for SWC > 0.33  
         
         
         polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
-                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,0.5),
+                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,tci),
                 border=NA)
         polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
-                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.55,0.5),
+                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.5,tci),
                 border=NA)
-        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2) 
+        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr ,
+               lty=2-beta_air$sigID[beta_air$forestID == 1 & beta_air$swID == 2 & beta_air$regID ==1]) 
         
-        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2)
+        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr ,
+               lty=2-beta_air$sigID[beta_air$forestID == 1 & beta_air$swID == 2 & beta_air$regID ==2])
         
         
         
         # location 2
+        plotS1 <- soilMod %>% filter(locID == 2 & swID == 1 & snowID ==1)
+        plotS2 <- soilMod %>% filter(locID == 2 & swID == 2 & snowID ==1)
+        
         mfr1 <- mu_temp_freezes %>% filter(locID == 2 & swID == 1)
         mfr2 <- mu_temp_freezes %>% filter(locID == 2 & swID == 2)
         mwr1 <- mu_temp_warms %>% filter(locID == 2 & swID == 1)
         mwr2 <- mu_temp_warms %>% filter(locID == 2 & swID == 2)
         # gray green rgb(0.58,0.63,0.53,0.25)
+        par(mai=c(0.25,0,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
              xlab= " ", ylab=" ", axes=FALSE)
-        points(plotS1$aveT, plotS1$Tsoil_6, pch=19, col=rgb(0.16,0.42,0.22,0.25))
-        points(plotS2$aveT, plotS2$Tsoil_6, pch=19, col=rgb(0.5,0.5,0.5,0.25))
+        points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.16,0.42,0.22,tp), cex=pcx)
+        points(plotS2$aveT, plotS2$Tsoil_6, pch=16, col=rgb(0.5,0.5,0.5,tp), cex=pcx)
         
         # model mean line for SWC <= 0.33  
         
         
         polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
-                c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.16,0.42,0.22,0.5),
+                c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.16,0.42,0.22,tci),
                 border=NA)
         polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
-                c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.16,0.42,0.22,0.5),
+                c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.16,0.42,0.22,tci),
                 border=NA)
-        points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.16,0.42,0.22), lwd=2) 
+        points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.16,0.42,0.22), 
+               lwd=lwr ,lty=2-beta_air$sigID[beta_air$forestID == 2 & beta_air$swID == 1 & beta_air$regID ==1]) 
         
-        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.16,0.42,0.22), lwd=2) 
+        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.16,0.42,0.22), lwd=lwr ,
+              lty= 2-beta_air$sigID[beta_air$forestID == 2 & beta_air$swID == 1 & beta_air$regID ==2]) 
         
         
         # model mean line for SWC > 0.33  
         
         
         polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
-                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,0.5),
+                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,tci),
                 border=NA)
         polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
-                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.55,0.5),
+                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.55,tci),
                 border=NA)
-        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2) 
+        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr ,
+               lty= 2-beta_air$sigID[beta_air$forestID == 2 & beta_air$swID == 2 & beta_air$regID ==1]) 
         
-        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2)
+        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr ,
+               lty= 2-beta_air$sigID[beta_air$forestID == 2 & beta_air$swID == 2 & beta_air$regID ==2])
         
         # location 3
+        plotS1 <- soilMod %>% filter(locID == 3 & swID == 1 & snowID ==1)
+        plotS2 <- soilMod %>% filter(locID == 3 & swID == 2 & snowID ==1)
+        
         mfr1 <- mu_temp_freezes %>% filter(locID == 3 & swID == 1)
         mfr2 <- mu_temp_freezes %>% filter(locID == 3 & swID == 2)
         mwr1 <- mu_temp_warms %>% filter(locID == 3 & swID == 1)
         mwr2 <- mu_temp_warms %>% filter(locID == 3 & swID == 2)
         # gray green rgb(0.58,0.63,0.53,0.25)
+        par(mai=c(0.25,0,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
              xlab= " ", ylab=" ", axes=FALSE)
-        points(plotS1$aveT, plotS1$Tsoil_6, pch=19, col=rgb(0.58,0.79,0.92,0.25))
-        points(plotS2$aveT, plotS2$Tsoil_6, pch=19, col=rgb(0.5,0.5,0.5,0.25))
+        points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.58,0.79,0.92,tp), cex=pcx)
+        points(plotS2$aveT, plotS2$Tsoil_6, pch=16, col=rgb(0.5,0.5,0.5,tp), cex=pcx)
         
         # model mean line for SWC <= 0.33  
         
         
         polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
-                c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.58,0.79,0.92,0.5),
+                c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.58,0.79,0.92,tci),
                 border=NA)
         polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
-                c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.58,0.79,0.92,0.5),
+                c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.58,0.79,0.92,tci),
                 border=NA)
-        points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.58,0.79,0.92), lwd=2) 
+        points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.58,0.79,0.92), lwd=lwr,
+               lty= 2-beta_air$sigID[beta_air$forestID == 3 & beta_air$swID == 1 & beta_air$regID ==1]) 
         
-        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.58,0.79,0.92), lwd=2) 
+        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.58,0.79,0.92), lwd=lwr,
+               lty= 2-beta_air$sigID[beta_air$forestID == 3 & beta_air$swID == 1 & beta_air$regID ==2]) 
         
         
         # model mean line for SWC > 0.33  
         
         
         polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
-                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,0.5),
+                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,tci),
                 border=NA)
         polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
-                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.55,0.5),
+                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.55,tci),
                 border=NA)
-        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2) 
+        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
+               lty= 2-beta_air$sigID[beta_air$forestID == 3 & beta_air$swID == 2 & beta_air$regID ==1]) 
         
-        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2)
+        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
+               lty= 2-beta_air$sigID[beta_air$forestID == 3 & beta_air$swID == 2 & beta_air$regID ==2])
         
         
         
         # location 4
+        plotS1 <- soilMod %>% filter(locID == 4 & swID == 1 & snowID ==1)
+        plotS2 <- soilMod %>% filter(locID == 4 & swID == 2 & snowID ==1)
+        
         mfr1 <- mu_temp_freezes %>% filter(locID == 4 & swID == 1)
         mfr2 <- mu_temp_freezes %>% filter(locID == 4 & swID == 2)
         mwr1 <- mu_temp_warms %>% filter(locID == 4 & swID == 1)
         mwr2 <- mu_temp_warms %>% filter(locID == 4 & swID == 2)
         # gray green rgb(0.58,0.63,0.53,0.25)
+        par(mai=c(0.25,0,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
              xlab= " ", ylab=" ", axes=FALSE)
-        points(plotS1$aveT, plotS1$Tsoil_6, pch=19, col=rgb(0.85,0.58,0.39,0.25))
-        points(plotS2$aveT, plotS2$Tsoil_6, pch=19, col=rgb(0.5,0.5,0.5,0.25))
+        points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.85,0.58,0.39,tp), cex=pcx)
+        points(plotS2$aveT, plotS2$Tsoil_6, pch=16, col=rgb(0.5,0.5,0.5,tp), cex=pcx)
         
         # model mean line for SWC <= 0.33  
         
         
         polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
-                c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.85,0.58,0.39,0.5),
+                c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.85,0.58,0.39,tci),
                 border=NA)
         polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
-                c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.85,0.58,0.39,,0.5),
+                c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.85,0.58,0.39,tci),
                 border=NA)
-        points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.85,0.58,0.39,), lwd=2) 
+        points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.85,0.58,0.39,), lwd=lwr,
+               lty= 2-beta_air$sigID[beta_air$forestID == 4 & beta_air$swID == 1 & beta_air$regID ==1]) 
         
-        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.85,0.58,0.39), lwd=2) 
+        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.85,0.58,0.39), lwd=lwr,
+               lty= 2-beta_air$sigID[beta_air$forestID == 4 & beta_air$swID == 1 & beta_air$regID ==2]) 
         
         
         # model mean line for SWC > 0.33  
         
         
         polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
-                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,0.5),
+                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,tci),
                 border=NA)
         polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
-                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.55,0.5),
+                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.5,tci),
                 border=NA)
-        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2) 
+        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
+               lty= 2-beta_air$sigID[beta_air$forestID == 4 & beta_air$swID == 2 & beta_air$regID ==1]) 
         
-        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2)
+        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
+               lty= 2-beta_air$sigID[beta_air$forestID == 4 & beta_air$swID == 2 & beta_air$regID ==2])
         
         # location 5
+        plotS1 <- soilMod %>% filter(locID == 5 & swID == 1 & snowID ==1)
+        plotS2 <- soilMod %>% filter(locID == 5 & swID == 2 & snowID ==1)
+        
         mfr1 <- mu_temp_freezes %>% filter(locID == 5 & swID == 1)
         mfr2 <- mu_temp_freezes %>% filter(locID == 5 & swID == 2)
         mwr1 <- mu_temp_warms %>% filter(locID == 5 & swID == 1)
         mwr2 <- mu_temp_warms %>% filter(locID == 5 & swID == 2)
-        plotS <- soilMod %>% filter(locID == 5 & SWC_12 <= 0.33)
-        plotS2 <- soilMod %>% filter(locID == 5 & SWC_12 > 0.33)
         
+ 
+        
+        par(mai=c(0.25,0,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
              xlab= " ", ylab=" ", axes=FALSE)
-        points(plotS1$aveT, plotS1$Tsoil_6, pch=19, col=rgb(0.85,0.75,0.54,0.25))
-        points(plotS2$aveT, plotS2$Tsoil_6, pch=19, col=rgb(0.5,0.5,0.5,0.25))
+        points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.85,0.75,0.54,tp), cex=pcx)
+        points(plotS2$aveT, plotS2$Tsoil_6, pch=16, col=rgb(0.5,0.5,0.5,tp), cex=pcx)
         
         # model mean line for SWC <= 0.33  
         
         
         polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
-                c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.85,0.75,0.54,0.5),
+                c(mfr1$X2.5., rev(mfr1$X97.5.)), col=rgb(0.85,0.75,0.54,tci),
                 border=NA)
         polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
-                c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.85,0.75,0.54,,0.5),
+                c(mwr1$X2.5., rev(mwr1$X97.5.)), col=rgb(0.85,0.75,0.54,tci),
                 border=NA)
-        points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.85,0.75,0.54), lwd=2) 
+        points(plotFreeze$temp_freeze, mfr1$mean, type="l", col=rgb(0.85,0.75,0.54), lwd=lwr,
+               lty= 2-beta_air$sigID[beta_air$forestID == 5 & beta_air$swID == 1 & beta_air$regID ==1]) 
         
-        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.85,0.75,0.54), lwd=2) 
+        points(plotWarm$temp_warm, mwr1$mean, type="l", col=rgb(0.85,0.75,0.54), lwd=lwr,
+               lty= 2-beta_air$sigID[beta_air$forestID == 5 & beta_air$swID == 1 & beta_air$regID ==2]) 
         
         
         # model mean line for SWC > 0.33  
         
         
         polygon(c(plotFreeze$temp_freeze, rev(plotFreeze$temp_freeze)),
-                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,0.5),
+                c(mfr2$X2.5., rev(mfr2$X97.5.)), col=rgb(0.55,0.5,0.5,tci),
                 border=NA)
         polygon(c(plotWarm$temp_warm, rev(plotWarm$temp_warm)),
-                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.55,0.5),
+                c(mwr2$X2.5., rev(mwr2$X97.5.)), col=rgb(0.5,0.5,0.55,tci),
                 border=NA)
-        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2) 
+        points(plotFreeze$temp_freeze, mfr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
+               lty= 2-beta_air$sigID[beta_air$forestID == 5 & beta_air$swID == 2 & beta_air$regID ==1]) 
         
-        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=2)       
+        points(plotWarm$temp_warm, mwr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
+               lty= 2-beta_air$sigID[beta_air$forestID == 5 & beta_air$swID == 2 & beta_air$regID ==2])       
+
+        
+        ### snow free/low snow # 
+        # location 1 
+        plotS1 <- soilMod %>% filter(locID == 1 & swID == 1 & snowID ==2)
+        plotS2 <- soilMod %>% filter(locID == 1 & swID == 2 & snowID ==2)
+        
+        msr1 <- mu_temp_snow %>% filter(locID == 1 & swID == 1)
+        msr2 <- mu_temp_snow %>% filter(locID == 1 & swID == 2)
+
+        # gray green rgb(0.58,0.63,0.53,0.25)
+        par(mai=c(0.25,0,0,0))
+        plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
+             xlab= " ", ylab=" ", axes=FALSE)
+        points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.49,0.63,0.3,tp), cex=pcx)
+        points(plotS2$aveT, plotS2$Tsoil_6, pch=16, col=rgb(0.5,0.5,0.5,tp), cex=pcx)
+        
+        # model mean line for SWC <= 0.33  
+        
+        
+        polygon(c(plotSnow$temp_snow, rev(plotSnow$temp_snow)),
+                c(msr1$X2.5., rev(msr1$X97.5.)), col=rgb(0.49,0.63,0.3,tci),
+                border=NA)
+  
+        points(plotSnow$temp_snow, msr1$mean, type="l", col=rgb(0.49,0.63,0.3), lwd=lwr,
+               lty=2-beta_air$sigID[beta_air$forestID == 1 & beta_air$swID == 1 & beta_air$regID ==3])
+        
+        
+        polygon(c(plotSnow$temp_snow, rev(plotSnow$temp_snow)),
+                c(msr2$X2.5., rev(msr2$X97.5.)), col=rgb(0.5,0.5,0.5,tci),
+                border=NA)
+        
+        points(plotSnow$temp_snow, msr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
+               lty=2-beta_air$sigID[beta_air$forestID == 1 & beta_air$swID == 2 & beta_air$regID ==3])
+        
+
+        ### snow free/low snow # 
+        # location 2 
+        plotS1 <- soilMod %>% filter(locID == 2 & swID == 1 & snowID ==2)
+        plotS2 <- soilMod %>% filter(locID == 2 & swID == 2 & snowID ==2)
+        
+        msr1 <- mu_temp_snow %>% filter(locID == 2 & swID == 1)
+        msr2 <- mu_temp_snow %>% filter(locID == 2 & swID == 2)
+        
+        # gray green rgb(0.58,0.63,0.53,0.25)
+        par(mai=c(0.25,0,0,0))
+        plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
+             xlab= " ", ylab=" ", axes=FALSE)
+        points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.16,0.42,0.22,tp), cex=pcx)
+        points(plotS2$aveT, plotS2$Tsoil_6, pch=16, col=rgb(0.5,0.5,0.5,tp), cex=pcx)
+        
+        
+        polygon(c(plotSnow$temp_snow, rev(plotSnow$temp_snow)),
+                c(msr1$X2.5., rev(msr1$X97.5.)), col=rgb(0.16,0.42,0.22,tci),
+                border=NA)
+        
+        points(plotSnow$temp_snow, msr1$mean, type="l", col=rgb(0.16,0.42,0.22), lwd=lwr,
+               lty=2-beta_air$sigID[beta_air$forestID == 2 & beta_air$swID == 1 & beta_air$regID ==3])
+        
+        
+        polygon(c(plotSnow$temp_snow, rev(plotSnow$temp_snow)),
+                c(msr2$X2.5., rev(msr2$X97.5.)), col=rgb(0.5,0.5,0.5,tci),
+                border=NA)
+        
+        points(plotSnow$temp_snow, msr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
+               lty=2-beta_air$sigID[beta_air$forestID == 2 & beta_air$swID == 2 & beta_air$regID ==3])
+        
+        
+        ### snow free/low snow # 
+        # location 3 
+        plotS1 <- soilMod %>% filter(locID == 3 & swID == 1 & snowID ==2)
+        plotS2 <- soilMod %>% filter(locID == 3 & swID == 2 & snowID ==2)
+        
+        msr1 <- mu_temp_snow %>% filter(locID == 3 & swID == 1)
+        msr2 <- mu_temp_snow %>% filter(locID == 3 & swID == 2)
+        
+      
+        par(mai=c(0.25,0,0,0))
+        plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
+             xlab= " ", ylab=" ", axes=FALSE)
+        points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.58,0.79,0.92,tp), cex=pcx)
+        points(plotS2$aveT, plotS2$Tsoil_6, pch=16, col=rgb(0.5,0.5,0.5,tp), cex=pcx)
+        
+        
+        polygon(c(plotSnow$temp_snow, rev(plotSnow$temp_snow)),
+                c(msr1$X2.5., rev(msr1$X97.5.)), col=rgb(0.58,0.79,0.92,tci),
+                border=NA)
+        
+        points(plotSnow$temp_snow, msr1$mean, type="l", col=rgb(0.58,0.79,0.92), lwd=lwr,
+               lty=2-beta_air$sigID[beta_air$forestID == 3 & beta_air$swID == 1 & beta_air$regID ==3])
+        
+        
+        polygon(c(plotSnow$temp_snow, rev(plotSnow$temp_snow)),
+                c(msr2$X2.5., rev(msr2$X97.5.)), col=rgb(0.5,0.5,0.5,tci),
+                border=NA)
+        
+        points(plotSnow$temp_snow, msr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
+               lty=2-beta_air$sigID[beta_air$forestID == 3 & beta_air$swID == 2 & beta_air$regID ==3])
+        
+        ### snow free/low snow # 
+        # location 4 
+        plotS1 <- soilMod %>% filter(locID == 4 & swID == 1 & snowID ==2)
+        plotS2 <- soilMod %>% filter(locID == 4 & swID == 2 & snowID ==2)
+        
+        msr1 <- mu_temp_snow %>% filter(locID == 4 & swID == 1)
+        msr2 <- mu_temp_snow %>% filter(locID == 4 & swID == 2)
+        
+        
+        par(mai=c(0.25,0,0,0))
+        plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
+             xlab= " ", ylab=" ", axes=FALSE)
+        points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.85,0.58,0.39,tp), cex=pcx)
+        points(plotS2$aveT, plotS2$Tsoil_6, pch=16, col=rgb(0.5,0.5,0.5,tp), cex=pcx)
+        
+        
+        polygon(c(plotSnow$temp_snow, rev(plotSnow$temp_snow)),
+                c(msr1$X2.5., rev(msr1$X97.5.)), col=rgb(0.85,0.58,0.39,tci),
+                border=NA)
+        
+        points(plotSnow$temp_snow, msr1$mean, type="l", col=rgb(0.85,0.58,0.39), lwd=lwr,
+               lty=2-beta_air$sigID[beta_air$forestID == 4 & beta_air$swID == 1 & beta_air$regID ==3])
+        
+        
+        polygon(c(plotSnow$temp_snow, rev(plotSnow$temp_snow)),
+                c(msr2$X2.5., rev(msr2$X97.5.)), col=rgb(0.5,0.5,0.5,tci),
+                border=NA)
+        
+        points(plotSnow$temp_snow, msr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
+               lty=2-beta_air$sigID[beta_air$forestID == 4 & beta_air$swID == 2 & beta_air$regID ==3])
+        
+        ### snow free/low snow # 
+        # location 5 
+        plotS1 <- soilMod %>% filter(locID == 5 & swID == 1 & snowID ==2)
+        plotS2 <- soilMod %>% filter(locID == 5 & swID == 2 & snowID ==2)
+        
+        msr1 <- mu_temp_snow %>% filter(locID == 5 & swID == 1)
+        msr2 <- mu_temp_snow %>% filter(locID == 5 & swID == 2)
+        
+        par(mai=c(0.25,0,0,0))
+        plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
+             xlab= " ", ylab=" ", axes=FALSE)
+        points(plotS1$aveT, plotS1$Tsoil_6, pch=16, col=rgb(0.85,0.75,0.54,tp), cex=pcx)
+        points(plotS2$aveT, plotS2$Tsoil_6, pch=16, col=rgb(0.5,0.5,0.5,tp), cex=pcx)
+        
+        
+        polygon(c(plotSnow$temp_snow, rev(plotSnow$temp_snow)),
+                c(msr1$X2.5., rev(msr1$X97.5.)), col=rgb(0.85,0.75,0.54,tci),
+                border=NA)
+        
+        points(plotSnow$temp_snow, msr1$mean, type="l", col=rgb(0.85,0.75,0.54), lwd=lwr,
+               lty=2-beta_air$sigID[beta_air$forestID == 5 & beta_air$swID == 1 & beta_air$regID ==3])
+        
+        
+        polygon(c(plotSnow$temp_snow, rev(plotSnow$temp_snow)),
+                c(msr2$X2.5., rev(msr2$X97.5.)), col=rgb(0.5,0.5,0.5,tci),
+                border=NA)
+        
+        points(plotSnow$temp_snow, msr2$mean, type="l", col=rgb(0.5,0.5,0.5), lwd=lwr,
+               lty=2-beta_air$sigID[beta_air$forestID == 5 & beta_air$swID == 2 & beta_air$regID ==3])
+        
 dev.off()
 
-
-
-
-
-hist(soilMod$Tsoil_6[soilMod$modforestID==5&soilMod$swID == 1])
-hist(soilMod$Tsoil_6[soilMod$modforestID==5&soilMod$swID == 2])
 
 ################# Supplement: -----
 
