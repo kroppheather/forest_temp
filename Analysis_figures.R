@@ -389,6 +389,8 @@ dev.off()
 
 ### examples
 ####### Table 1: Site data ----
+
+
 # calculate stand basal area and dominant species
 forestInventory$tree_area.m2 <- (((forestInventory$DBH.cm / 2)^2) * pi/10000) 
 FI <- forestInventory %>%
@@ -437,40 +439,127 @@ plotsI <- unique(PlotSpec$Plot)
 
 PlotComp <- left_join(PlotSpec, SpeciesInfo, by=c("Species"="Code"))
 
-NameSub <- character()
-for(i in 1:nrow(PlotComp)){
-  NameSub[i] <- paste0(substr(strsplit(PlotComp$Species.y[i], " ")[[1]][1],1,1), ". ",
-                       strsplit(PlotComp$Species.y[i], " ")[[1]][2])
-}
+# summarize soil measurements
+# total sample size
+AllSoil <- soilDat %>%
+  group_by(location, year) %>%
+  summarize(nObs = n(),
+            doyYearS = min(doy),
+            doyYearE=max(doy),
+            minTemp = min(Tsoil_6),
+            maxTemp=max(Tsoil_6),
+            aveTemp=mean(Tsoil_6)) 
+ 
+totObs <- AllSoil %>%
+  group_by(location) %>%
+  summarize(totObs = sum(nObs))
 
-PlotComp$NameSub <- NameSub
-PlotComp$Name <- ifelse(PlotComp$Genus =="Malus", "Malus sp.", PlotComp$NameSub ) 
+# total sample size
+modnSoil <- soilMod %>%
+  group_by(location) %>%
+  summarize(nObs = n())
 
-PlotComp <- PlotComp %>%
-  arrange(desc(PercBA))
-PlotComp[PlotComp$Plot == "RG03",]
 
-pasteSub <- character()
-namecomp <- character()
-namePerc <- character()
+# freezing events
+freezeEvent <- freezeCheck %>%
+  group_by(freezeEvent, location,year)%>%
+  summarize(minTemp =min(Tsoil_6),
+            startdoy=min(doy),
+            duration = n())
 
-for(i in 1:length(plotsI)){
+freezePlot <- freezeEvent %>%
+  group_by(location, year) %>%
+  summarize(nEvent = n(),
+            max_duration = max(duration),
+            minT = min(minTemp))
+
+# temp summary for table
+
+soilTable <- soilDat %>%
+  group_by(location, year) %>%
+  summarize(minT = round(min(Tsoil_6),1),
+            maxT = round(max(Tsoil_6),1),
+            aveT = round(mean(Tsoil_6),1))
+
+weatherTable <- weatherDay %>%
+  group_by(year) %>%
+  summarize(nobs =n(),
+            maxT = max(aveT,na.rm=TRUE),
+            minT=min(aveT,na.rm=TRUE),
+            ave=mean(aveT,na.rm=TRUE),
+            totP=sum(Precip_gap,na.rm=TRUE),
+            maxSnow=max(SNWD,na.rm=TRUE))
+
+
+# evaluate air freezing events
+
+weatherDay$freezeAir <- ifelse(weatherDay$aveT<0,1,0)
+
+weatherDay <- weatherDay %>%
+  arrange(year,doy)
+
+freezeCheckA <- weatherDay %>%
+  filter(freezeAir == 1)
+# get all freeze events
+freezeEventA <- c(1)
+for(i in 2:nrow(freezeCheckA)){
+  if(
+     freezeCheckA$year[i-1] == freezeCheckA$year[i] & 
+     freezeCheckA$doy[i-1] == (freezeCheckA$doy[i]-1)){
+    freezeEventA[i] <- freezeEventA[i-1]
+    
+  }else{
+    freezeEventA[i] <-freezeEventA[i-1]+1}
   
-  pasteSub <- PlotComp$Name[PlotComp$Plot == plotsI[i]]
-  percSub <-  paste0(pasteSub, "(",round(PlotComp$PercBA[PlotComp$Plot == plotsI[i]],0),")")
-  namecomp[i] <- paste(pasteSub,  collapse = ", ")
-  namePerc[i] <- paste(percSub,  collapse = ", ")
 }
-namecomp
-namePerc
+# label start of an event
+freezeStartA <- c(1)
+for(i in 2:nrow(freezeCheckA)){
+  if(freezeEventA[i-1]!=freezeEventA[i]){
+    freezeStartA[i] <- 1
+  }else{
+    freezeStartA[i] <- 0
+  }
+}
 
-SpeciesTable <- data.frame(Plot = plotsI,
-                           composition = namePerc)
+# get the day before the freeze
+freezeLastDayA <-  freezeCheckA$doy[1]-1
+for(i in 2:nrow(freezeCheckA)){
+  if(freezeStartA[i] == 1){
+    freezeLastDayA[i] <- freezeCheckA$doy[i]-1
+  }else{
+    freezeLastDayA[i] <- freezeLastDayA[i-1]
+  }
+}
 
-PlotTable <- left_join(PlotTable, SpeciesTable, by="Plot")
+freezeLastDayYearA <-  freezeCheckA$year[1]
+for(i in 2:nrow(freezeCheckA)){
+  if(freezeStartA[i] == 1){
+    freezeLastDayYearA[i] <- freezeCheckA$year[i]
+  }else{
+    freezeLastDayYearA[i] <- freezeLastDayYearA[i-1]
+  }
+}
 
+freezeCheckA$freezeStart <- freezeStartA
 
+freezeCheckA$freezeEvent <- freezeEventA
 
+freezeCheckA$freezeLastDayYear <- freezeLastDayYearA
+freezeCheckA$freezeLastDay <- freezeLastDayA
+
+freezeEventA <- freezeCheckA %>%
+  group_by(freezeEvent, year)%>%
+  summarize(minTemp =min(aveT),
+            startdoy=min(doy),
+            duration = n())
+
+freezePlotA <- freezeEventA %>%
+  group_by(year) %>%
+  summarize(nEvent = n(),
+            max_duration = max(duration),
+            minT = min(minTemp))
+  
 ####### Figure : temperature model and patterns ----
 #index order: forest, swID, snowID
 #snowID: 1= no/low snow
