@@ -388,7 +388,7 @@ text(xp, 0.6, "C", cex=plcx)
 dev.off()
 
 ### examples
-####### Table 1: Site data ----
+####### Tables: Site data & temperature trends----
 
 
 # calculate stand basal area and dominant species
