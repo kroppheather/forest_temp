@@ -453,7 +453,7 @@ lw <- 4
 yxAT <- seq(-15,25, by=10)
 yxSuT <- seq(-15,25, by=10)
 yxSoT <- seq(-5,15, by=5)
-yxSW <- seq(0,0.6, by=0.1)
+yxSW <- seq(0,0.5, by=0.1)
 yxPR <- seq(0,60, by=10)
 yxSN <- seq(0,600, by=100)
 # axis sizing
@@ -482,7 +482,14 @@ precipRescale <- function(x,precipMax,ylf,yhf) {
 precipRescale(10,prMax,yl,yh)
 
 # legend size 
-lgcx = 4
+lgcx = 3.85
+#legend coordinates
+xo <- 0.05
+yleg1 <- 32
+# legend offset for forest types
+xof <- -0.01
+yleg2 <- -1
+
 
 # text 
 xp <- 2023.05
@@ -536,8 +543,8 @@ mtext("Air temperature", side=2, line=lly1, cex=labll, )
 mtext(expression(paste("(",degree,"C)")), side=2, line=lly2, cex=labll)
 
 
-legend(2023.05,33, c("temperature", "snow depth", "precipitation"), col=c("black","grey75","#4169E199"), lwd=c(lw,NA,NA), pch=c(NA,15,15),
-       bty="n", horiz=TRUE, cex=lgcx)
+legend(2023+xo,yleg1, c("temperature"), col=c("black"), lwd=c(lw), 
+       bty="n", cex=lgcx)
 text(xp, 27, "A", cex=plcx)
 axis(4,  precipRescale(yxPR,prMax,yl,yh), rep("", length(yxPR)), cex=cx_tick)
 
@@ -559,6 +566,11 @@ axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
 mtext("Soil temperature", side=2, line=lly1, cex=labll)
 mtext(expression(paste("(", degree,"C)")), side=2, line=lly2, cex=labll)
 text(xp, 15, "B", cex=plcx)
+
+legend(2023+xof,yleg2, c("decid. forest", "mixed forest"), col=locColor[1:2], lty=1, lwd=lw, bty="n", cex=lgcx)
+#legend(2023.95,0.66, locLabel[3:4], col=locColor[3:4], lty=1, lwd=lw, bty="n", cex=lgcx)
+#legend(2024.95,0.66, locLabel[5], col=locColor[5], lty=1, lwd=lw, bty="n", cex=lgcx)
+
 #soil moisture
 
 par(mai=c(0.25,0.25,0.25,0.25))
@@ -618,7 +630,8 @@ axis(2, c(-30,yxAT,40), rep("", length(yxAT)+2), cex=cx_tick)
 
 axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
 
-
+legend(2024+xo,yleg1, c( "precipitation"), col=c("#4169E199"), pch=c(15),
+       bty="n", cex=lgcx)
 
 #legend(2023.05,33, c("temperature", "snow depth", "precipitation"), col=c("black","grey75","#4169E199"), lwd=c(lw,NA,NA), pch=c(NA,15,15),
 #       bty="n", horiz=TRUE, cex=lgcx)
@@ -641,6 +654,282 @@ axis(2, c(-30,yxSoT,40), rep("", length(yxSoT)+2), cex=cx_tick)
 axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
 
 text(xp2, 15, "E", cex=plcx)
+
+legend(2024+xof,yleg2, c("conifer","scrub"), col=locColor[3:4], lty=1, lwd=lw, bty="n", cex=lgcx)
+
+#soil moisture
+
+par(mai=c(0.25,0.25,0.25,0.25))
+plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl4,yh4), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+
+#legend(2022.9,0.66, locLabel[1:2], col=locColor[1:2], lty=1, lwd=lw, bty="n", cex=lgcx)
+#legend(2023.95,0.66, locLabel[3:4], col=locColor[3:4], lty=1, lwd=lw, bty="n", cex=lgcx)
+#legend(2024.95,0.66, locLabel[5], col=locColor[5], lty=1, lwd=lw, bty="n", cex=lgcx)
+for(i in 1:5){
+  points(soilDat$wyDD[soilDat$locID==i],soilDat$SWC_12[soilDat$locID==i],
+         type="l", col=locColor[i], lwd=lw )
+}
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+mtext(monthsLab, side=1, at=monthDD, line = lyax, cex=cll)
+
+
+axis(2, c(-1,yxSW,1), rep("", length(yxSW)+2), cex=cx_tick)
+
+text(xp2, 0.5, "F", cex=plcx)
+
+
+
+####### Figure 2: Warm season Met and soil data ----
+singleLoc <- soilDat %>%
+  filter(location == "hemlock sapflow")
+
+rainsnow <- singleLoc %>%
+  filter(rain_snow == 1)
+
+
+
+wd <- 12
+hd <- 18
+
+
+# x range
+xl1 <- 2023.3315
+xh1 <- 2023.74794
+
+xl2 <- 2024.333
+xh2 <- 2024.578
+
+xl3 <- 2025.3315
+xh3 <- 2025.7486
+
+
+
+#y range for meteorological graph
+#air temp and precipitation
+yl <- -5
+yh <- 30
+#precip in mm
+prMax <- 65
+
+
+yl3 <- 0
+yh3 <- 25
+
+yl4 <- 0.05
+yh4 <- 0.55
+
+#sizing for lines of graph
+lw <- 4
+
+# axes label sequences
+yxAT <- seq(-15,25, by=10)
+yxSuT <- seq(-15,25, by=10)
+yxSoT <- seq(-5,15, by=5)
+yxSW <- seq(0,0.5, by=0.1)
+yxPR <- seq(0,60, by=10)
+yxSN <- seq(0,600, by=100)
+# axis sizing
+cx_tick <- 4
+# line for y axis tick labels
+lyax <- 4
+# line for first label 
+lly1 <-18
+lly2 <- 11
+lly3 <- 14
+lly4 <- 19
+#sizing for y axis tick labels
+cll <- 3
+labll <- 4
+
+monthseq <- c(121,152,182,213,244)
+monthseqL <- c(122,153,183,214,245)
+monthsLab <- c("M","J","J","A","S")
+
+monthseqDD <- monthseq/365
+monthseqLDD <- monthseq/366
+
+precipRescale <- function(x,precipMax,ylf,yhf) {
+  (((yhf-ylf)/precipMax)*x)+ylf
+}
+precipRescale(10,prMax,yl,yh)
+
+# legend size 
+lgcx = 3.85
+#legend coordinates
+xo <- 0.05
+yleg1 <- 32
+# legend offset for forest types
+xof <- -0.01
+yleg2 <- -1
+
+
+# text 
+xp <- 2023.05
+xp2 <- 2024.05
+xp3 <- 2025.05
+xp4 <- 2026.05
+# panel letter size
+plcx <- 5
+
+
+
+
+png(paste0(plotDir,"/daily_data_cold.png"), width = 72, height = 70, units = "cm", res=300)
+layout(matrix(seq(1,12),ncol=4,byrow=FALSE), width=rep(lcm(wd),4),height=rep(lcm(hd),3))
+
+### Water year 2023 (Oct 2022-Apr 2023)
+#air temp and precip
+monthDD <- 2023+monthseqDD
+par(mai=c(0.25,0.25,0.25,0.25))
+plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl,yh), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+
+
+
+for(i in 1:nrow(singleLoc)){
+  polygon(c(singleLoc$wyDD[i]-0.001,singleLoc$wyDD[i]-0.001,
+            singleLoc$wyDD[i]+0.001,singleLoc$wyDD[i]+0.001),
+          c(precipRescale(0,snMax,yl2,yh2),
+            precipRescale(singleLoc$SNWD[i]/10,snMax,yl2,yh2),
+            precipRescale(singleLoc$SNWD[i]/10,snMax,yl2,yh2),
+            precipRescale(0,snMax,yl2,yh2)),
+          col="grey60", border=NA)
+}
+for(i in 1:nrow(singleLoc)){
+  polygon(c(singleLoc$wyDD[i]-0.001,singleLoc$wyDD[i]-0.001,
+            singleLoc$wyDD[i]+0.001,singleLoc$wyDD[i]+0.001),
+          c(precipRescale(0,prMax,yl,yh),
+            precipRescale(singleLoc$Precip_gap[i],prMax,yl,yh),
+            precipRescale(singleLoc$Precip_gap[i],prMax,yl,yh),
+            precipRescale(0,prMax,yl,yh)),
+          col="#4169E199", border=NA)
+}
+
+points(singleLoc$wyDD, singleLoc$aveT, type="l", pch=19, lwd=lw )
+
+axis(2, c(-30,yxAT,40), rep("", length(yxAT)+2), cex=cx_tick)
+mtext(yxAT, side=2, at=yxAT, line = lyax, cex=cll, las=2)
+
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+mtext("Air temperature", side=2, line=lly1, cex=labll, )
+mtext(expression(paste("(",degree,"C)")), side=2, line=lly2, cex=labll)
+
+
+legend(2023+xo,yleg1, c("temperature"), col=c("black"), lwd=c(lw), 
+       bty="n", cex=lgcx)
+text(xp, 27, "A", cex=plcx)
+axis(4,  precipRescale(yxPR,prMax,yl,yh), rep("", length(yxPR)), cex=cx_tick)
+
+
+# soil temp
+par(mai=c(0.25,0.25,0.25,0.25))
+plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl3,yh3), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+abline(h=0)
+
+
+for(i in 1:5){
+  points(soilDat$wyDD[soilDat$locID==i],soilDat$Tsoil_6[soilDat$locID==i],
+         type="l", col=locColor[i], lwd=lw)
+}
+axis(2, c(-30,yxSoT,40), rep("", length(yxSoT)+2), cex=cx_tick)
+mtext(yxSoT, side=2, at=yxSoT, line = lyax, cex=cll, las=2)
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+mtext("Soil temperature", side=2, line=lly1, cex=labll)
+mtext(expression(paste("(", degree,"C)")), side=2, line=lly2, cex=labll)
+text(xp, 15, "B", cex=plcx)
+
+legend(2023+xof,yleg2, c("decid. forest", "mixed forest"), col=locColor[1:2], lty=1, lwd=lw, bty="n", cex=lgcx)
+#legend(2023.95,0.66, locLabel[3:4], col=locColor[3:4], lty=1, lwd=lw, bty="n", cex=lgcx)
+#legend(2024.95,0.66, locLabel[5], col=locColor[5], lty=1, lwd=lw, bty="n", cex=lgcx)
+
+#soil moisture
+
+par(mai=c(0.25,0.25,0.25,0.25))
+plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl4,yh4), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+
+#legend(2022.9,0.66, locLabel[1:2], col=locColor[1:2], lty=1, lwd=lw, bty="n", cex=lgcx)
+#legend(2023.95,0.66, locLabel[3:4], col=locColor[3:4], lty=1, lwd=lw, bty="n", cex=lgcx)
+#legend(2024.95,0.66, locLabel[5], col=locColor[5], lty=1, lwd=lw, bty="n", cex=lgcx)
+for(i in 1:5){
+  points(soilDat$wyDD[soilDat$locID==i],soilDat$SWC_12[soilDat$locID==i],
+         type="l", col=locColor[i], lwd=lw )
+}
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+mtext(monthsLab, side=1, at=monthDD, line = lyax, cex=cll)
+
+
+axis(2, c(-1,yxSW,1), rep("", length(yxSW)+2), cex=cx_tick)
+mtext(yxSW, side=2, at=yxSW, line = lyax, cex=cll, las=2)
+mtext("Soil moisture", side=2, line=lly1, cex=labll)
+mtext(expression(paste("(m"^3,"m"^-3,")")), side=2, line=lly2, cex=labll)
+text(xp, 0.5, "C", cex=plcx)
+
+
+### Water year 2024 (Oct 2023-Apr 2024)
+#air temp and precip
+monthDD <- 2024+monthseqDD
+par(mai=c(0.25,0.25,0.25,0.25))
+plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl,yh), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+
+
+
+for(i in 1:nrow(singleLoc)){
+  polygon(c(singleLoc$wyDD[i]-0.001,singleLoc$wyDD[i]-0.001,
+            singleLoc$wyDD[i]+0.001,singleLoc$wyDD[i]+0.001),
+          c(precipRescale(0,snMax,yl2,yh2),
+            precipRescale(singleLoc$SNWD[i]/10,snMax,yl2,yh2),
+            precipRescale(singleLoc$SNWD[i]/10,snMax,yl2,yh2),
+            precipRescale(0,snMax,yl2,yh2)),
+          col="grey60", border=NA)
+}
+for(i in 1:nrow(singleLoc)){
+  polygon(c(singleLoc$wyDD[i]-0.001,singleLoc$wyDD[i]-0.001,
+            singleLoc$wyDD[i]+0.001,singleLoc$wyDD[i]+0.001),
+          c(precipRescale(0,prMax,yl,yh),
+            precipRescale(singleLoc$Precip_gap[i],prMax,yl,yh),
+            precipRescale(singleLoc$Precip_gap[i],prMax,yl,yh),
+            precipRescale(0,prMax,yl,yh)),
+          col="#4169E199", border=NA)
+}
+
+points(singleLoc$wyDD, singleLoc$aveT, type="l", pch=19, lwd=lw )
+
+axis(2, c(-30,yxAT,40), rep("", length(yxAT)+2), cex=cx_tick)
+
+
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+
+legend(2024+xo,yleg1, c( "precipitation"), col=c("#4169E199"), pch=c(15),
+       bty="n", cex=lgcx)
+
+#legend(2023.05,33, c("temperature", "snow depth", "precipitation"), col=c("black","grey75","#4169E199"), lwd=c(lw,NA,NA), pch=c(NA,15,15),
+#       bty="n", horiz=TRUE, cex=lgcx)
+text(xp2, 27, "D", cex=plcx)
+
+
+# soil temp
+par(mai=c(0.25,0.25,0.25,0.25))
+plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl3,yh3), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+abline(h=0)
+
+
+for(i in 1:5){
+  points(soilDat$wyDD[soilDat$locID==i],soilDat$Tsoil_6[soilDat$locID==i],
+         type="l", col=locColor[i], lwd=lw)
+}
+axis(2, c(-30,yxSoT,40), rep("", length(yxSoT)+2), cex=cx_tick)
+
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+
+text(xp2, 15, "E", cex=plcx)
+
+legend(2024+xof,yleg2, c("conifer","scrub"), col=locColor[3:4], lty=1, lwd=lw, bty="n", cex=lgcx)
+
 #soil moisture
 
 par(mai=c(0.25,0.25,0.25,0.25))
@@ -694,7 +983,8 @@ for(i in 1:nrow(singleLoc)){
 points(singleLoc$wyDD, singleLoc$aveT, type="l", pch=19, lwd=lw )
 
 axis(2, c(-30,yxAT,40), rep("", length(yxAT)+2), cex=cx_tick)
-
+legend(2025+xo,yleg1, c( "snow depth"), col=c("grey75"), pch=c(15),
+       bty="n", cex=lgcx)
 
 axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
 
@@ -721,7 +1011,179 @@ axis(2, c(-30,yxSoT,40), rep("", length(yxSoT)+2), cex=cx_tick)
 
 axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
 
-text(xp, 15, "H", cex=plcx)
+text(xp3, 15, "H", cex=plcx)
+
+legend(2025+xof,yleg2, "meadow", col=locColor[5], lty=1, lwd=lw, bty="n", cex=lgcx)
+#soil moisture
+
+par(mai=c(0.25,0.25,0.25,0.25))
+plot(c(0,1),c(0,1), type="n", xlim=c(xl3,xh3), ylim=c(yl4,yh4), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+
+#legend(2022.9,0.66, locLabel[1:2], col=locColor[1:2], lty=1, lwd=lw, bty="n", cex=lgcx)
+#legend(2023.95,0.66, locLabel[3:4], col=locColor[3:4], lty=1, lwd=lw, bty="n", cex=lgcx)
+#legend(2024.95,0.66, locLabel[5], col=locColor[5], lty=1, lwd=lw, bty="n", cex=lgcx)
+for(i in 1:5){
+  points(soilDat$wyDD[soilDat$locID==i],soilDat$SWC_12[soilDat$locID==i],
+         type="l", col=locColor[i], lwd=lw )
+}
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+mtext(monthsLab, side=1, at=monthDD, line = lyax, cex=cll)
+
+
+axis(2, c(-1,yxSW,1), rep("", length(yxSW)+2), cex=cx_tick)
+
+text(xp3, 0.5, "I", cex=plcx)
+
+
+
+### Water year 2026 (Oct 2025-Apr 2026)
+#air temp and precip
+monthDD <- 2026+monthseqDD
+par(mai=c(0.25,0.25,0.25,0.25))
+plot(c(0,1),c(0,1), type="n", xlim=c(xl4,xh4), ylim=c(yl,yh), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+
+
+
+for(i in 1:nrow(singleLoc)){
+  polygon(c(singleLoc$wyDD[i]-0.001,singleLoc$wyDD[i]-0.001,
+            singleLoc$wyDD[i]+0.001,singleLoc$wyDD[i]+0.001),
+          c(precipRescale(0,snMax,yl2,yh2),
+            precipRescale(singleLoc$SNWD[i]/10,snMax,yl2,yh2),
+            precipRescale(singleLoc$SNWD[i]/10,snMax,yl2,yh2),
+            precipRescale(0,snMax,yl2,yh2)),
+          col="grey60", border=NA)
+}
+for(i in 1:nrow(singleLoc)){
+  polygon(c(singleLoc$wyDD[i]-0.001,singleLoc$wyDD[i]-0.001,
+            singleLoc$wyDD[i]+0.001,singleLoc$wyDD[i]+0.001),
+          c(precipRescale(0,prMax,yl,yh),
+            precipRescale(singleLoc$Precip_gap[i],prMax,yl,yh),
+            precipRescale(singleLoc$Precip_gap[i],prMax,yl,yh),
+            precipRescale(0,prMax,yl,yh)),
+          col="#4169E199", border=NA)
+}
+
+points(singleLoc$wyDD, singleLoc$aveT, type="l", pch=19, lwd=lw )
+
+axis(2, c(-30,yxAT,40), rep("", length(yxAT)+2), cex=cx_tick)
+
+
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+
+
+
+#legend(2023.05,33, c("temperature", "snow depth", "precipitation"), col=c("black","grey75","#4169E199"), lwd=c(lw,NA,NA), pch=c(NA,15,15),
+#       bty="n", horiz=TRUE, cex=lgcx)
+text(xp4, 27, "J", cex=plcx)
+axis(4,  precipRescale(yxPR,prMax,yl,yh), rep("", length(yxPR)), cex=cx_tick)
+mtext(yxPR, side=4, at=precipRescale(yxPR,prMax,yl,yh), line = lyax, cex=cll, las=2)
+mtext("Precipitation (mm)", side=4, line=lly3, cex=labll)
+mtext("Snow depth (cm)", side=4, line=lly4, cex=labll)
+
+# soil temp
+par(mai=c(0.25,0.25,0.25,0.25))
+plot(c(0,1),c(0,1), type="n", xlim=c(xl4,xh4), ylim=c(yl3,yh3), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+abline(h=0)
+
+
+for(i in 1:5){
+  points(soilDat$wyDD[soilDat$locID==i],soilDat$Tsoil_6[soilDat$locID==i],
+         type="l", col=locColor[i], lwd=lw)
+}
+axis(2, c(-30,yxSoT,40), rep("", length(yxSoT)+2), cex=cx_tick)
+
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+
+text(xp4, 15, "K", cex=plcx)
+#soil moisture
+
+par(mai=c(0.25,0.25,0.25,0.25))
+plot(c(0,1),c(0,1), type="n", xlim=c(xl4,xh4), ylim=c(yl4,yh4), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+
+#legend(2022.9,0.66, locLabel[1:2], col=locColor[1:2], lty=1, lwd=lw, bty="n", cex=lgcx)
+#legend(2023.95,0.66, locLabel[3:4], col=locColor[3:4], lty=1, lwd=lw, bty="n", cex=lgcx)
+#legend(2024.95,0.66, locLabel[5], col=locColor[5], lty=1, lwd=lw, bty="n", cex=lgcx)
+for(i in 1:5){
+  points(soilDat$wyDD[soilDat$locID==i],soilDat$SWC_12[soilDat$locID==i],
+         type="l", col=locColor[i], lwd=lw )
+}
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+mtext(monthsLab, side=1, at=monthDD, line = lyax, cex=cll)
+
+axis(2, c(-1,yxSW,1), rep("", length(yxSW)+2), cex=cx_tick)
+
+text(xp4, 0.5, "L", cex=plcx)
+
+
+dev.off()
+
+
+### Water year 2025 (Oct 2024-Apr 2025)
+#air temp and precip
+monthDD <- 2025+monthseqDD
+par(mai=c(0.25,0.25,0.25,0.25))
+plot(c(0,1),c(0,1), type="n", xlim=c(xl3,xh3), ylim=c(yl,yh), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+
+
+
+for(i in 1:nrow(singleLoc)){
+  polygon(c(singleLoc$wyDD[i]-0.001,singleLoc$wyDD[i]-0.001,
+            singleLoc$wyDD[i]+0.001,singleLoc$wyDD[i]+0.001),
+          c(precipRescale(0,snMax,yl2,yh2),
+            precipRescale(singleLoc$SNWD[i]/10,snMax,yl2,yh2),
+            precipRescale(singleLoc$SNWD[i]/10,snMax,yl2,yh2),
+            precipRescale(0,snMax,yl2,yh2)),
+          col="grey60", border=NA)
+}
+for(i in 1:nrow(singleLoc)){
+  polygon(c(singleLoc$wyDD[i]-0.001,singleLoc$wyDD[i]-0.001,
+            singleLoc$wyDD[i]+0.001,singleLoc$wyDD[i]+0.001),
+          c(precipRescale(0,prMax,yl,yh),
+            precipRescale(singleLoc$Precip_gap[i],prMax,yl,yh),
+            precipRescale(singleLoc$Precip_gap[i],prMax,yl,yh),
+            precipRescale(0,prMax,yl,yh)),
+          col="#4169E199", border=NA)
+}
+
+points(singleLoc$wyDD, singleLoc$aveT, type="l", pch=19, lwd=lw )
+
+axis(2, c(-30,yxAT,40), rep("", length(yxAT)+2), cex=cx_tick)
+legend(2025+xo,yleg1, c( "snow depth"), col=c("grey75"), pch=c(15),
+       bty="n", cex=lgcx)
+
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+
+
+
+#legend(2023.05,33, c("temperature", "snow depth", "precipitation"), col=c("black","grey75","#4169E199"), lwd=c(lw,NA,NA), pch=c(NA,15,15),
+#       bty="n", horiz=TRUE, cex=lgcx)
+text(xp3, 27, "G", cex=plcx)
+axis(4,  precipRescale(yxPR,prMax,yl,yh), rep("", length(yxPR)), cex=cx_tick)
+
+
+# soil temp
+par(mai=c(0.25,0.25,0.25,0.25))
+plot(c(0,1),c(0,1), type="n", xlim=c(xl3,xh3), ylim=c(yl3,yh3), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+abline(h=0)
+
+
+for(i in 1:5){
+  points(soilDat$wyDD[soilDat$locID==i],soilDat$Tsoil_6[soilDat$locID==i],
+         type="l", col=locColor[i], lwd=lw)
+}
+axis(2, c(-30,yxSoT,40), rep("", length(yxSoT)+2), cex=cx_tick)
+
+axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
+
+text(xp3, 15, "H", cex=plcx)
+
+legend(2025+xof,yleg2, "meadow", col=locColor[5], lty=1, lwd=lw, bty="n", cex=lgcx)
 #soil moisture
 
 par(mai=c(0.25,0.25,0.25,0.25))
