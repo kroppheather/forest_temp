@@ -2035,23 +2035,30 @@ canopy24$doylabel <- ifelse(canopy24$doy <= 169, 165, # middle date
                               canopy24$doy )
 
 boxL <- canopy24 %>%
-  group_by(doylabel,locID) %>%
+  group_by(doylabel,date_label, locID) %>%
   summarise(q0 = quantile(LAI, probs=0,na.rm=TRUE),
             q25 = quantile(LAI, probs=0.25,na.rm=TRUE),
             q50 = quantile(LAI, probs=0.5,na.rm=TRUE),
             q75 = quantile(LAI, probs=0.75,na.rm=TRUE),
             q1 = quantile(LAI, probs=1,na.rm=TRUE))
 
-boxL$doy0 <- boxL$doylabel-165
-boxL$doyG <- boxL$doylabel*boxL$locID
+
+sampIDs <- unique(data.frame(doylabel = boxL$doylabel))
+sampIDs$plotdoy <- seq(1,nrow(sampIDs))
+
+boxL <- left_join(boxL, sampIDs, by="doylabel") 
+
+
 
 dboxL <- boxL %>% filter(locID ==1)
 dboxL2 <- boxL %>% filter(locID ==2)
 dboxL3 <- boxL %>% filter(locID ==3)
 dboxL4 <- boxL %>% filter(locID ==4)
 
-xl <- 162
-xh <- 303
+
+
+xl <- 0
+xh <- 6
 yl <- 0
 yh<- 8
 png(paste0(plotDir,"/daily_data.png"), width = 10, height = 10, units = "cm", res=300)
@@ -2059,25 +2066,29 @@ png(paste0(plotDir,"/daily_data.png"), width = 10, height = 10, units = "cm", re
 par(mai=c(1,1,1,1))
 plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
      xlab= " ", ylab=" ", axes=FALSE)
+
+  
 for(i in 1:nrow(dboxL)){
-  polygon(c(dboxL$doylabel[i]-1.1,dboxL$doylabel[i]-1.1, dboxL$doylabel[i]-.6,dboxL$doylabel[i]-.6),
+  polygon(c(dboxL$plotdoy[i]-1,dboxL$plotdoy[i]-1, dboxL$plotdoy[i]-.85,dboxL$plotdoy[i]-.85),
   c(dboxL$q25[i],dboxL$q75[i],dboxL$q75[i], dboxL$q25[i]), col=locColor[1])
 }
 
 for(i in 1:nrow(dboxL2)){
-  polygon(c(dboxL2$doylabel[i]-.5,dboxL2$doylabel[i]-.5, dboxL2$doylabel[i],dboxL2$doylabel[i]),
+  polygon(c(dboxL2$plotdoy[i]-.8,dboxL2$plotdoy[i]-.8, dboxL2$plotdoy[i]-0.65,dboxL2$plotdoy[i]-0.65),
           c(dboxL2$q25[i],dboxL2$q75[i],dboxL2$q75[i], dboxL2$q25[i]), col=locColor[2])
 }
 
 for(i in 1:nrow(dboxL3)){
-  polygon(c(dboxL3$doylabel[i]+0.1,dboxL3$doylabel[i]+0.1, dboxL3$doylabel[i]+0.6,dboxL3$doylabel[i]+0.6),
+  polygon(c(dboxL3$plotdoy[i]-0.55,dboxL3$plotdoy[i]-0.55, dboxL3$plotdoy[i]-0.4,dboxL3$plotdoy[i]-0.4),
           c(dboxL3$q25[i],dboxL3$q75[i],dboxL3$q75[i], dboxL3$q25[i]), col=locColor[3])
 }
 
 for(i in 1:nrow(dboxL4)){
-  polygon(c(dboxL4$doylabel[i]+0.7,dboxL4$doylabel[i]+0.7, dboxL4$doylabel[i]+1.2,dboxL4$doylabel[i]+1.2),
+  polygon(c(dboxL4$plotdoy[i]-.35,dboxL4$plotdoy[i]-.35, dboxL4$plotdoy[i]-.2,dboxL4$plotdoy[i]-.2),
           c(dboxL4$q25[i],dboxL4$q75[i],dboxL4$q75[i], dboxL4$q25[i]), col=locColor[4])
 }
+
+axis(1, seq(0,7)-0.6, c("","June-13","June-28","Sept-21","Sept-28","Oct-10","Oct-27",""))
 
 301-165
 
