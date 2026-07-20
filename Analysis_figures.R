@@ -25,6 +25,14 @@ source("/Users/hkropp/Documents/GitHub/forest_temp/weather.r")
 plotDir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/data_analysis"
 
 
+##### read in canopy data ----
+
+LAI24 <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/canopy_LAI/LAI.csv")
+l_depth25 <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/canopy_literfall/Litter depth 25.csv")
+litterfall25 <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/canopy_literfall/litterfall 25.csv")
+
+
+
 ##### read in additional site and canopy data ----
 
 
@@ -1985,6 +1993,93 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
 dev.off()
 
+
+
+
+####### Figure: canopy leaf 
+# double check guiden trap size
+litterfall25$trap_area <- ifelse(litterfall25$Trap.Type == "Kropp", 1, 0.8*0.8)
+
+# graphing of LAI from 2024
+
+LAI24$dateF <- mdy(LAI24$Date)
+LAI24$doy <- yday(LAI24$dateF)
+
+sites <- c("RG01","RG03","RG25","RG09")
+
+canopy24 <- LAI24 %>%
+  filter(site_id %in% sites )
+
+canopy24$LAI <- as.numeric(canopy24$PAR.LAI)
+
+canopy24$location <- ifelse(canopy24$site_id == "RG01", "deciduous forest",
+                            ifelse(canopy24$site_id == "RG25","mixed forest",
+                                   ifelse(canopy24$site_id == "RG09","conifer monoculture" , 
+                                          ifelse(canopy24$site_id == "RG03","scrub",  NA))))       
+canopy24$locID <- ifelse(canopy24$site_id == "RG01", 1,
+                            ifelse(canopy24$site_id == "RG25",2,
+                                   ifelse(canopy24$site_id == "RG09",3 , 
+                                          ifelse(canopy24$site_id == "RG03",4,  NA))))   
+
+
+
+ggplot(canopy24, aes(as.factor(doy), LAI, fill=location))+
+  geom_boxplot()
+
+canopy24$date_label <- ifelse(canopy24$doy <= 169, "2024-06-13", # middle date
+                            
+                                       canopy24$dateF )
+
+canopy24$doylabel <- ifelse(canopy24$doy <= 169, 165, # middle date
+                              
+                              canopy24$doy )
+
+boxL <- canopy24 %>%
+  group_by(doylabel,locID) %>%
+  summarise(q0 = quantile(LAI, probs=0,na.rm=TRUE),
+            q25 = quantile(LAI, probs=0.25,na.rm=TRUE),
+            q50 = quantile(LAI, probs=0.5,na.rm=TRUE),
+            q75 = quantile(LAI, probs=0.75,na.rm=TRUE),
+            q1 = quantile(LAI, probs=1,na.rm=TRUE))
+
+boxL$doy0 <- boxL$doylabel-165
+boxL$doyG <- boxL$doylabel*boxL$locID
+
+dboxL <- boxL %>% filter(locID ==1)
+dboxL2 <- boxL %>% filter(locID ==2)
+dboxL3 <- boxL %>% filter(locID ==3)
+dboxL4 <- boxL %>% filter(locID ==4)
+
+xl <- 162
+xh <- 303
+yl <- 0
+yh<- 8
+png(paste0(plotDir,"/daily_data.png"), width = 10, height = 10, units = "cm", res=300)
+#air temp and precip
+par(mai=c(1,1,1,1))
+plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+for(i in 1:nrow(dboxL)){
+  polygon(c(dboxL$doylabel[i]-1.1,dboxL$doylabel[i]-1.1, dboxL$doylabel[i]-.6,dboxL$doylabel[i]-.6),
+  c(dboxL$q25[i],dboxL$q75[i],dboxL$q75[i], dboxL$q25[i]), col=locColor[1])
+}
+
+for(i in 1:nrow(dboxL2)){
+  polygon(c(dboxL2$doylabel[i]-.5,dboxL2$doylabel[i]-.5, dboxL2$doylabel[i],dboxL2$doylabel[i]),
+          c(dboxL2$q25[i],dboxL2$q75[i],dboxL2$q75[i], dboxL2$q25[i]), col=locColor[2])
+}
+
+for(i in 1:nrow(dboxL3)){
+  polygon(c(dboxL3$doylabel[i]+0.1,dboxL3$doylabel[i]+0.1, dboxL3$doylabel[i]+0.6,dboxL3$doylabel[i]+0.6),
+          c(dboxL3$q25[i],dboxL3$q75[i],dboxL3$q75[i], dboxL3$q25[i]), col=locColor[3])
+}
+
+for(i in 1:nrow(dboxL4)){
+  polygon(c(dboxL4$doylabel[i]+0.7,dboxL4$doylabel[i]+0.7, dboxL4$doylabel[i]+1.2,dboxL4$doylabel[i]+1.2),
+          c(dboxL4$q25[i],dboxL4$q75[i],dboxL4$q75[i], dboxL4$q25[i]), col=locColor[4])
+}
+
+301-165
 
 ################# Supplement: -----
 
