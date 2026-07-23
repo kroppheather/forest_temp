@@ -2036,11 +2036,11 @@ canopy24$doylabel <- ifelse(canopy24$doy <= 169, 165, # middle date
 
 boxL <- canopy24 %>%
   group_by(doylabel,date_label, locID) %>%
-  summarise(q0 = quantile(LAI, probs=0,na.rm=TRUE),
+  summarise(q0 = quantile(LAI, probs=0.025,na.rm=TRUE),
             q25 = quantile(LAI, probs=0.25,na.rm=TRUE),
-            q50 = quantile(LAI, probs=0.5,na.rm=TRUE),
+            q50 = quantile(LAI, probs=0.50,na.rm=TRUE),
             q75 = quantile(LAI, probs=0.75,na.rm=TRUE),
-            q1 = quantile(LAI, probs=1,na.rm=TRUE))
+            q1 = quantile(LAI, probs=0.975,na.rm=TRUE))
 
 
 sampIDs <- unique(data.frame(doylabel = boxL$doylabel))
@@ -2058,9 +2058,15 @@ dboxL4 <- boxL %>% filter(locID ==4)
 
 
 xl <- 0
-xh <- 6
+xh <- 30
 yl <- 0
 yh<- 8
+#"June-13","June-28","Sept-21","Sept-28","Oct-10","Oct-27"
+#165,180,265,272,284,301
+plotL <- c(1,6,16,21,26)
+plotL2 <- c(2,7,12,17,22,27)
+plotL3 <- c(3,13,23,28)
+plotL4 <- c(4,14,19,29)
 png(paste0(plotDir,"/daily_data.png"), width = 10, height = 10, units = "cm", res=300)
 #air temp and precip
 par(mai=c(1,1,1,1))
@@ -2069,27 +2075,45 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
 
   
 for(i in 1:nrow(dboxL)){
-  polygon(c(dboxL$plotdoy[i]-1,dboxL$plotdoy[i]-1, dboxL$plotdoy[i]-.85,dboxL$plotdoy[i]-.85),
+  arrows(plotL[i], dboxL$q0[i],plotL[i], dboxL$q1[i], code=0)
+  polygon(c(plotL[i]-0.25,plotL[i]-0.25,plotL[i]+0.25,plotL[i]+0.25),
   c(dboxL$q25[i],dboxL$q75[i],dboxL$q75[i], dboxL$q25[i]), col=locColor[1])
+  arrows(plotL[i]-0.25, dboxL$q50[i],plotL[i]+0.25, dboxL$q50[i], code=0)
 }
 
 for(i in 1:nrow(dboxL2)){
-  polygon(c(dboxL2$plotdoy[i]-.8,dboxL2$plotdoy[i]-.8, dboxL2$plotdoy[i]-0.65,dboxL2$plotdoy[i]-0.65),
+  arrows(plotL2[i], dboxL2$q0[i],plotL2[i], dboxL2$q1[i], code=0)
+  polygon(c(plotL2[i]-0.25,plotL2[i]-0.25,plotL2[i]+0.25,plotL2[i]+0.25),
           c(dboxL2$q25[i],dboxL2$q75[i],dboxL2$q75[i], dboxL2$q25[i]), col=locColor[2])
+  arrows(plotL2[i]-0.25, dboxL2$q50[i],plotL2[i]+0.25, dboxL2$q50[i], code=0)
 }
 
 for(i in 1:nrow(dboxL3)){
-  polygon(c(dboxL3$plotdoy[i]-0.55,dboxL3$plotdoy[i]-0.55, dboxL3$plotdoy[i]-0.4,dboxL3$plotdoy[i]-0.4),
+  arrows(plotL3[i], dboxL3$q0[i],plotL3[i], dboxL3$q1[i], code=0)
+  polygon(c(plotL3[i]-0.25,plotL3[i]-0.25,plotL3[i]+0.25,plotL3[i]+0.25),
           c(dboxL3$q25[i],dboxL3$q75[i],dboxL3$q75[i], dboxL3$q25[i]), col=locColor[3])
+  arrows(plotL3[i]-0.25, dboxL3$q50[i],plotL3[i]+0.25, dboxL3$q50[i], code=0)
 }
 
 for(i in 1:nrow(dboxL4)){
-  polygon(c(dboxL4$plotdoy[i]-.35,dboxL4$plotdoy[i]-.35, dboxL4$plotdoy[i]-.2,dboxL4$plotdoy[i]-.2),
+  arrows(plotL4[i], dboxL4$q0[i],plotL4[i], dboxL4$q1[i], code=0)
+  polygon(c(plotL4[i]-0.25,plotL4[i]-0.25,plotL4[i]+0.25,plotL4[i]+0.25),
           c(dboxL4$q25[i],dboxL4$q75[i],dboxL4$q75[i], dboxL4$q25[i]), col=locColor[4])
+  arrows(plotL4[i]-0.25, dboxL4$q50[i],plotL4[i]+0.25, dboxL4$q50[i], code=0)
 }
 
-axis(1, seq(0,7)-0.6, c("","June-13","June-28","Sept-21","Sept-28","Oct-10","Oct-27",""))
-
+axis(1, c(-1,1,6,11,16,21,26,
+          2,7,12,17,22,27,
+          3,8,13,18,23,28,
+          4,9,14,19,24,29,31 ), 
+     c("",rep("DF",6),
+       rep("MF",6),
+       rep("CM",6),
+       rep("S",6),""))
+mtext(at=c(2.5,7.5,12.5,17.5,22.5,27.5), 
+      c("June-13","June-28","Sept-21","Sept-28","Oct-10","Oct-27"),
+      line=3, side=1, cex=2)
+axis(2, seq(0,8, by=0.5), las=2)
 301-165
 
 ################# Supplement: -----
