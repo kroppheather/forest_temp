@@ -227,178 +227,8 @@ locColorst <- c(rgb(126,160,78,100, maxColorValue = 255), # deciduous
 loc1 <- soilMod %>% filter(locID==1)
 ggplot(soilMod%>% filter(locID==5), aes(Tsurf_15, aveT, color=as.factor(snowID)))+
   geom_point()
-####### Figure 1: Met and soil data ----
-singleLoc <- soilDat %>%
-  filter(location == "hemlock sapflow")
 
-rainsnow <- singleLoc %>%
-  filter(rain_snow == 1)
-
-wd <- 55
-hd <- 18
-
-# x range
-xl <- 2022.74
-xh <- 2026.35
-#y range for meteorological graph
-#air temp and precipitation
-yl <- -25
-yh <- 30
-#precip in mm
-prMax <- 65
-
-#surface temp
-yl2 <- -25
-yh2 <- 30
-#snow depth max (cm)
-snMax <- 65
-
-yl3 <- -5
-yh3 <- 25
-
-yl4 <- 0.05
-yh4 <- 0.68
-
-#sizing for lines of graph
-lw <- 4
-
-# axes label sequences
-yxAT <- seq(-15,25, by=10)
-yxSuT <- seq(-15,25, by=10)
-yxSoT <- seq(-5,25, by=5)
-yxSW <- seq(0,0.6, by=0.1)
-yxPR <- seq(0,60, by=10)
-yxSN <- seq(0,600, by=100)
-# axis sizing
-cx_tick <- 4
-# line for y axis tick labels
-lyax <- 4
-# line for first label 
-lly1 <-18
-lly2 <- 11
-lly3 <- 14
-lly4 <- 19
-#sizing for y axis tick labels
-cll <- 3
-labll <- 4
-
-monthseq <- c(1,32,60,91,121,152,182,213,244,274,305,335)
-monthseqL <- c(1,32,61,92,122,153,183,214,245,275,306,336)
-monthLab <- c("J","F","M","A","M","J","J","A","S","O","N","D")
-
-months <- c(c(274,305,335),monthseq,monthseqL,  monthseq,c(1,32,60,91,121))
-monthsLab <- c(c("O","N","D"),monthLab, monthLab,monthLab,c("J","F","M","A"))
-years <- c(rep(2022,3), rep(2023,12),rep(2024,12),rep(2025,12),rep(2026,4))
-monthseq <- ifelse(leap_year(years), (months-1)/366,(months-1)/365)
-monthDD <- years+monthseq
-
-precipRescale <- function(x,precipMax,ylf,yhf) {
-  (((yhf-ylf)/precipMax)*x)+ylf
-}
-precipRescale(10,prMax,yl,yh)
-
-# legend size 
-lgcx = 4
-
-# text 
-xp <- 2022.8
-# panel letter size
-plcx <- 5
-
-
-
-
-png(paste0(plotDir,"/daily_data.png"), width = 72, height = 70, units = "cm", res=300)
-layout(matrix(c(1,2,3),ncol=1), width=lcm(wd),height=rep(lcm(hd),3))
-#air temp and precip
-par(mai=c(0.25,0,0,0))
-plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
-     xlab= " ", ylab=" ", axes=FALSE)
-
-
-
-for(i in 1:nrow(singleLoc)){
-  polygon(c(singleLoc$DD[i]-0.001,singleLoc$DD[i]-0.001,
-            singleLoc$DD[i]+0.001,singleLoc$DD[i]+0.001),
-          c(precipRescale(0,snMax,yl2,yh2),
-            precipRescale(singleLoc$SNWD[i]/10,snMax,yl2,yh2),
-            precipRescale(singleLoc$SNWD[i]/10,snMax,yl2,yh2),
-            precipRescale(0,snMax,yl2,yh2)),
-          col="grey60", border=NA)
-}
-for(i in 1:nrow(singleLoc)){
-  polygon(c(singleLoc$DD[i]-0.001,singleLoc$DD[i]-0.001,
-            singleLoc$DD[i]+0.001,singleLoc$DD[i]+0.001),
-          c(precipRescale(0,prMax,yl,yh),
-            precipRescale(singleLoc$Precip_gap[i],prMax,yl,yh),
-            precipRescale(singleLoc$Precip_gap[i],prMax,yl,yh),
-            precipRescale(0,prMax,yl,yh)),
-          col="#4169E199", border=NA)
-}
-
-points(singleLoc$DD, singleLoc$aveT, type="l", pch=19, lwd=lw )
-
-axis(2, c(-30,yxAT,40), rep("", length(yxAT)+2), cex=cx_tick)
-mtext(yxAT, side=2, at=yxAT, line = lyax, cex=cll, las=2)
-
-axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
-mtext("Air temperature", side=2, line=lly1, cex=labll, )
-mtext(expression(paste("(",degree,"C)")), side=2, line=lly2, cex=labll)
-
-
-legend(2024.05,33, c("temperature", "snow depth", "precipitation"), col=c("black","grey75","#4169E199"), lwd=c(lw,NA,NA), pch=c(NA,15,15),
-       bty="n", horiz=TRUE, cex=lgcx)
-text(xp, 27, "A", cex=plcx)
-axis(4,  precipRescale(yxPR,prMax,yl,yh), rep("", length(yxPR)), cex=cx_tick)
-mtext(yxPR, side=4, at=precipRescale(yxPR,prMax,yl,yh), line = lyax, cex=cll, las=2)
-mtext("Precipitation (mm)", side=4, line=lly3, cex=labll)
-mtext("Snow depth (cm)", side=4, line=lly4, cex=labll)
-
-# soil temp
-par(mai=c(0.25,0,0,0))
-plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl3,yh3), xaxs="i",yaxs="i",
-     xlab= " ", ylab=" ", axes=FALSE)
-abline(h=0)
-
-
-for(i in 1:5){
-  points(soilDat$DD[soilDat$locID==i],soilDat$Tsoil_6[soilDat$locID==i],
-         type="l", col=locColor[i], lwd=lw)
-}
-axis(2, c(-30,yxSoT,40), rep("", length(yxSoT)+2), cex=cx_tick)
-mtext(yxSoT, side=2, at=yxSoT, line = lyax, cex=cll, las=2)
-axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
-mtext("Soil temperature", side=2, line=lly1, cex=labll)
-mtext(expression(paste("(", degree,"C)")), side=2, line=lly2, cex=labll)
-text(xp, 23, "B", cex=plcx)
-#soil moisture
-
-par(mai=c(0.25,0,0,0))
-plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl4,yh4), xaxs="i",yaxs="i",
-     xlab= " ", ylab=" ", axes=FALSE)
-
-legend(2022.9,0.66, locLabel[1:2], col=locColor[1:2], lty=1, lwd=lw, bty="n", cex=lgcx)
-legend(2023.95,0.66, locLabel[3:4], col=locColor[3:4], lty=1, lwd=lw, bty="n", cex=lgcx)
-legend(2024.95,0.66, locLabel[5], col=locColor[5], lty=1, lwd=lw, bty="n", cex=lgcx)
-for(i in 1:5){
-  points(soilDat$DD[soilDat$locID==i],soilDat$SWC_12[soilDat$locID==i],
-         type="l", col=locColor[i], lwd=lw )
-}
-axis(1, monthDD, rep("", length(monthDD)), cex=cx_tick)
-mtext(monthsLab, side=1, at=monthDD, line = lyax, cex=cll)
-mtext(seq(2023,2026), side=1, at=seq(2023,2026), line = lyax+5, cex=cll+1, adj=0)
-
-axis(2, c(-1,yxSW,1), rep("", length(yxSW)+2), cex=cx_tick)
-mtext(yxSW, side=2, at=yxSW, line = lyax, cex=cll, las=2)
-mtext("Soil moisture", side=2, line=lly1, cex=labll)
-mtext(expression(paste("(m"^3,"m"^-3,")")), side=2, line=lly2, cex=labll)
-text(xp, 0.6, "C", cex=plcx)
-dev.off()
-
-
-
-
-####### Figure 1: Cold season Met and soil data ----
+####### Figure 2: Cold season Met and soil data ----
 singleLoc <- soilDat %>%
   filter(location == "hemlock sapflow")
 
@@ -860,7 +690,7 @@ dev.off()
 
 
 
-####### Figure 2: Warm season Met and soil data ----
+####### Figure 3: Warm season Met and soil data ----
 singleLoc <- soilDat %>%
   filter(location == "hemlock sapflow")
 
@@ -1358,7 +1188,7 @@ freezePlotA <- freezeEventA %>%
             max_duration = max(duration),
             minT = min(minTemp))
   
-####### Figure : temperature model and patterns ----
+####### Figure 4: temperature model and patterns ----
 #index order: forest, swID, snowID
 #snowID: 1= no/low snow
 #swID 1= at or below fc, 2= above fc
@@ -1404,7 +1234,7 @@ mu_temp_snow$locID <- as.numeric( mu_temp_snow$locID )
 mu_temp_snow$swID <- as.numeric(gsub("\\D","", mu_temp_snow$swID ))
 
 
-########## plot 2 graphing ----
+########## Figure 4: LAI graphing ----
 
 
 wd <- 10
