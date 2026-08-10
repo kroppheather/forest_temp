@@ -1234,7 +1234,7 @@ mu_temp_snow$locID <- as.numeric( mu_temp_snow$locID )
 mu_temp_snow$swID <- as.numeric(gsub("\\D","", mu_temp_snow$swID ))
 
 
-########## Figure 4: LAI graphing ----
+
 
 
 wd <- 10
@@ -1826,9 +1826,53 @@ dev.off()
 
 
 
-####### Figure: canopy leaf 
+####### Figure 5: canopy leaf ----
+
+# organize litter fall
 # double check guiden trap size
 litterfall25$trap_area <- ifelse(litterfall25$Trap.Type == "Kropp", 1, 0.8*0.8)
+
+litterTrap <- litterfall25 %>%
+  group_by(Date.Collected,Plot,Trap.Type) %>%
+  summarize(lt_wt = sum(Weight, na.rm=TRUE))
+litterTrap$trap_area <- ifelse(litterTrap$Trap.Type == "Kropp", 1, 0.8*0.8)
+litterTrap$wt_m2 <- litterTrap$lt_wt/litterTrap$trap_area
+
+
+litterPlot <- litterTrap %>%
+  group_by(Date.Collected, Plot) %>%
+  summarize(g_m2 = mean(wt_m2),
+            n_tr = n())
+litterPlot$date <- mdy(litterPlot$Date.Collected)
+litterPlot <- litterPlot %>%
+  filter(Plot !="RG04" & date > mdy("9/20/25"))
+
+ggplot(litterPlot, aes(date, g_m2, fill=Plot))+
+  geom_col(position="dodge")
+
+# organize litter depth
+lit_depth <- l_depth25 %>%
+  pivot_longer(!c(Date,Plot,Direction), names_to="rep", values_to="cm")
+
+lit_depth$depth_conv <- ifelse(lit_depth$cm == "Trace",0.05, 
+                        ifelse(       lit_depth$cm == "None", 0, lit_depth$cm))
+
+lit_depth$depth <- as.numeric(lit_depth$depth_conv)
+
+lit_depth$date <- mdy(lit_depth$Date)
+ggplot(lit_depth %>% filter(Plot !="RG04"), aes(as.factor(date),depth, fill=Plot))+
+  geom_boxplot()
+depthPlot <- lit_depth %>%
+  group_by(Date, Plot) %>%
+  summarize(ave_depth = mean(depth),
+            sd = sd(depth),
+            n = n())%>% filter(Plot !="RG04")
+
+depthPlot$se <- depthPlot$sd/sqrt(depthPlot$n)
+depthPlot$date <- mdy(depthPlot$Date)
+
+ggplot(depthPlot, aes(date,depth, color=Plot))+
+  geom_point()
 
 # graphing of LAI from 2024
 
@@ -1897,7 +1941,7 @@ plotL <- c(1,6,16,21,26)
 plotL2 <- c(2,7,12,17,22,27)
 plotL3 <- c(3,13,23,28)
 plotL4 <- c(4,14,19,29)
-png(paste0(plotDir,"/daily_data.png"), width = 10, height = 10, units = "cm", res=300)
+png(paste0(plotDir,"/LAI_data.png"), width = 25, height = 15, units = "cm", res=300)
 #air temp and precip
 par(mai=c(1,1,1,1))
 plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
@@ -1936,15 +1980,19 @@ axis(1, c(-1,1,6,11,16,21,26,
           2,7,12,17,22,27,
           3,8,13,18,23,28,
           4,9,14,19,24,29,31 ), 
-     c("",rep("DF",6),
-       rep("MF",6),
-       rep("CM",6),
-       rep("S",6),""))
+     c("",rep("D",6),
+       rep("M",6),
+       rep("C",6),
+       rep("S",6),""),cex.axis=0.9)
 mtext(at=c(2.5,7.5,12.5,17.5,22.5,27.5), 
       c("June-13","June-28","Sept-21","Sept-28","Oct-10","Oct-27"),
-      line=3, side=1, cex=2)
-axis(2, seq(0,8, by=0.5), las=2)
-301-165
+      line=3, side=1, cex=1.5)
+axis(2, seq(0,8, by=1), las=2, cex.axis=1)
+mtext(expression(paste("Leaf Area Index (m"[leaf]^2," m"[ground]^-2,")")), side=2, line=2,cex=1.5)
+legend("topright", c("deciduous forest","mixed forest", "coniferous forest", "shrubland"), 
+       fill=locColor[1:4], bty="n")
+
+dev.off()
 
 ################# Supplement: -----
 
