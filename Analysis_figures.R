@@ -1871,8 +1871,31 @@ depthPlot <- lit_depth %>%
 depthPlot$se <- depthPlot$sd/sqrt(depthPlot$n)
 depthPlot$date <- mdy(depthPlot$Date)
 
-ggplot(depthPlot, aes(date,depth, color=Plot))+
-  geom_point()
+ggplot(depthPlot, aes(date,ave_depth, color=Plot))+
+  geom_point()+geom_line()
+
+depthPlot <- depthPlot %>%
+  arrange(date,Plot)
+
+png(paste0(plotDir,"/depth_data.png"), width = 25, height = 15, units = "cm", res=300)
+plot(c(0,1),c(0,1), type="n", xlim=c(ymd("2025-09-01"),ymd("2025-11-15")), ylim=c(-0.1,3.5), xaxs="i",yaxs="i",
+     xlab= " ", ylab=" ", axes=FALSE)
+
+plots <- c("RG01","RG25","RG09","RG03")
+for(i in 1:4){
+  points(depthPlot$date[depthPlot$Plot == plots[i]], 
+       depthPlot$ave_depth[depthPlot$Plot == plots[i]], type="b",col=locColor[i], pch=19)
+  arrows(depthPlot$date[depthPlot$Plot == plots[i]],
+    depthPlot$ave_depth[depthPlot$Plot == plots[i]]-depthPlot$se[depthPlot$Plot == plots[i]],
+    depthPlot$date[depthPlot$Plot == plots[i]],
+    depthPlot$ave_depth[depthPlot$Plot == plots[i]]+depthPlot$se[depthPlot$Plot == plots[i]], 
+    code=0, col=locColor[i])
+  }
+  axis(2, seq(0,3.5, by=0.5), las=2, cex.axis=1)
+  axis(1, c(ymd("2025-09-01"),ymd("2025-09-15"),ymd("2025-09-30"),ymd("2025-10-15"), ymd("2025-10-31"),
+            "2025-11-15"), c("Sept-01", "Sept-15","Sept-30","Oct-15", "Oct-31",
+                             "Nov-15"),cex.axis=1)
+dev.off()
 
 # graphing of LAI from 2024
 
