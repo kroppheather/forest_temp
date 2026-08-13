@@ -46,7 +46,7 @@ modDir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My
 
 tomstDay <- tomst25
 
-airDay <- weatherDay %>%
+airDay <- weatherDay |>
   select(doy, year, aveT, maxT, minT)
 
 ggplot(weatherDay, aes(aveT, SolRad))+
@@ -66,7 +66,7 @@ soilAll$date <- as.Date(soilAll$doy-1, origin=paste0(soilAll$year, "-01-01"))
 soilAll$VWC_f <- ifelse(soilAll$Tsoil_6 <0,NA, soilAll$SWC_12)
 
 weatherDay$date <- as.Date(weatherDay$doy-1, origin=paste0(weatherDay$year, "-01-01"))
-weatherJoin <- weatherDay %>%
+weatherJoin <- weatherDay |>
   select(!c(aveT,nAveT,maxT,minT))
 soilmet <- left_join(soilAll, weatherJoin, by=c("doy","year","date"))
 
@@ -75,10 +75,10 @@ soilmet <- left_join(soilAll, weatherJoin, by=c("doy","year","date"))
 # gap fill freezing soil data from measurements before freeze
 soilmet$freezeSoil <- ifelse(soilmet$Tsoil_6<0,1,0)
 
-soilMet <- soilmet %>%
+soilMet <- soilmet |>
   arrange(location, year,doy)
 
-freezeCheck<- soilMet %>%
+freezeCheck<- soilMet |>
   filter(freezeSoil == 1)
 # get all freeze events
 freezeEvent <- c(1)
@@ -129,27 +129,27 @@ freezeCheck$freezeLastDayYear <- freezeLastDayYear
 freezeCheck$freezeLastDay <- freezeLastDay
 
 
-soilSub <- soilMet %>%
+soilSub <- soilMet |>
   filter(doy==freezeCheck$freezeLastDay[1] & year==freezeCheck$freezeLastDayYear[1] &
            location == freezeCheck$location[1])
 
 freezeFill <- numeric()
 for(i in 1:nrow(freezeCheck)){
-  soilSub <- soilMet %>%
+  soilSub <- soilMet |>
     filter(doy==freezeCheck$freezeLastDay[i]& year==freezeCheck$freezeLastDayYear[i] &
              location == freezeCheck$location[i])
   freezeFill[i] <- soilSub$SWC_12
 }
 freezeCheck$lastVWC <- freezeFill
 
-freezeJoin <- freezeCheck %>%
+freezeJoin <- freezeCheck |>
   select(location,year,doy,freezeEvent, freezeStart, lastVWC)
 
 soilMet <- left_join(soilMet, freezeJoin, by=c("location","year","doy"))
 
 soilMet$VWC_gap <- ifelse(soilMet$freezeSoil == 1, soilMet$lastVWC, soilMet$SWC_12)
 # use water year starting Oct 1 2023
-soilDat <- soilMet %>%
+soilDat <- soilMet |>
   filter(DD>=2022.747)
 
 soilDat$locID <- ifelse(soilDat$location == "maple-beech", 1, #Deciduous forest
@@ -160,11 +160,11 @@ soilDat$locID <- ifelse(soilDat$location == "maple-beech", 1, #Deciduous forest
 
 # count up how many missing gap filled precip observations
 weatherDay$DD <- weatherDay$year + ((weatherDay$doy-1)/ifelse(leap_year(weatherDay$year),366,365))
-PrecipCount <- weatherDay %>%
-  select(year,DD,Precip_gap) %>%
-  filter(DD >=2023.747) %>%
-  na.omit() %>%
-  group_by(year) %>%
+PrecipCount <- weatherDay |>
+  select(year,DD,Precip_gap) |>
+  filter(DD >=2023.747) |>
+  na.omit() |>
+  group_by(year) |>
   summarize(ncount = n())
 #missing 3 days of precip in 2024
 # no missing days other years
@@ -174,8 +174,8 @@ PrecipCount <- weatherDay %>%
 
 
 
-soilMod <- soilDat %>%
-  filter(is.na(aveT) == FALSE) %>%
+soilMod <- soilDat |>
+  filter(is.na(aveT) == FALSE) |>
   filter(is.na(SNWD) == FALSE)
 # create ID for time periods below freezing
 soilMod$freezeModID <- ifelse(soilMod$aveT <= 0, 1,2) # 1 below or at freezing
@@ -199,9 +199,9 @@ soilMod$regID <- ifelse(soilMod$snowID == 1 & soilMod$freezeModID == 1, 1, # fre
                                ifelse(soilMod$snowID == 2, 3, NA))) # snow 
 
 # create ID table
-soilIDs <- soilMod %>%
-  ungroup %>%
-  select(location, locID, freezeModID, snowID, regID, swID) %>%
+soilIDs <- soilMod |>
+  ungroup |>
+  select(location, locID, freezeModID, snowID, regID, swID) |>
   distinct()
 
 
@@ -224,15 +224,15 @@ locColorst <- c(rgb(126,160,78,100, maxColorValue = 255), # deciduous
                 rgb(217,148,40,100, maxColorValue = 255), # scrub
                 rgb(216,192,138,100, maxColorValue = 255)) # reforestation
 
-loc1 <- soilMod %>% filter(locID==1)
-ggplot(soilMod%>% filter(locID==5), aes(Tsurf_15, aveT, color=as.factor(snowID)))+
+loc1 <- soilMod |> filter(locID==1)
+ggplot(soilMod|> filter(locID==5), aes(Tsurf_15, aveT, color=as.factor(snowID)))+
   geom_point()
 
 ####### Figure 2: Cold season Met and soil data ----
-singleLoc <- soilDat %>%
+singleLoc <- soilDat |>
   filter(location == "hemlock sapflow")
 
-rainsnow <- singleLoc %>%
+rainsnow <- singleLoc |>
   filter(rain_snow == 1)
 
 # create a water year index
@@ -691,10 +691,10 @@ dev.off()
 
 
 ####### Figure 3: Warm season Met and soil data ----
-singleLoc <- soilDat %>%
+singleLoc <- soilDat |>
   filter(location == "hemlock sapflow")
 
-rainsnow <- singleLoc %>%
+rainsnow <- singleLoc |>
   filter(rain_snow == 1)
 
 
@@ -1021,17 +1021,17 @@ dev.off()
 
 # calculate stand basal area and dominant species
 forestInventory$tree_area.m2 <- (((forestInventory$DBH.cm / 2)^2) * pi/10000) 
-FI <- forestInventory %>%
-  filter(Dead == "N", DBH.cm >3 ) %>%
-  filter(Species != "CEOR") %>%
-  filter(Species != "VITIS") %>% # remove vines from dbh calcs
-  group_by(Plot, Species) %>%
+FI <- forestInventory |>
+  filter(Dead == "N", DBH.cm >3 ) |>
+  filter(Species != "CEOR") |>
+  filter(Species != "VITIS") |> # remove vines from dbh calcs
+  group_by(Plot, Species) |>
   summarise(totArea = sum(tree_area.m2,na.rm=TRUE),
             ncount = n(),
             aveDBH = mean(DBH.cm,na.rm=TRUE))
 
-TotBA <- FI %>%
-  group_by(Plot) %>%
+TotBA <- FI |>
+  group_by(Plot) |>
   summarise(totBA = sum(totArea))
 #forest plot area
 PA_ha <- (15^2*pi)/10000          
@@ -1039,16 +1039,16 @@ TotBA$BA_m2_ha <- TotBA$totBA/PA_ha
 
 plotStudy <- c("RG01","RG25","RG09","RG03")
 
-PlotTable <- TotBA %>%
+PlotTable <- TotBA |>
   filter(Plot %in% plotStudy)
 
 
 
-FITot <-  forestInventory %>%
-  filter(Dead == "N", DBH.cm >3 ) %>%
-  filter(Species != "CEOR") %>%
-  filter(Species != "VITIS") %>% # remove vines from dbh calcs
-  group_by(Plot) %>%
+FITot <-  forestInventory |>
+  filter(Dead == "N", DBH.cm >3 ) |>
+  filter(Species != "CEOR") |>
+  filter(Species != "VITIS") |> # remove vines from dbh calcs
+  group_by(Plot) |>
   summarise(totArea = sum(tree_area.m2,na.rm=TRUE),
             ncount = n(),
             aveDBH = mean(DBH.cm,na.rm=TRUE))
@@ -1057,10 +1057,10 @@ FIjoin <- left_join(FI,FITot, by="Plot")
 FIjoin$PercBA <- (FIjoin$totArea.x/FIjoin$totArea.y)*100  
 
 
-FItop <- FIjoin %>%
+FItop <- FIjoin |>
   filter(PercBA > 5)
 
-PlotSpec <- FItop %>%
+PlotSpec <- FItop |>
   select(Species,Plot, PercBA)
 
 plotsI <- unique(PlotSpec$Plot)
@@ -1069,8 +1069,8 @@ PlotComp <- left_join(PlotSpec, SpeciesInfo, by=c("Species"="Code"))
 
 # summarize soil measurements
 # total sample size
-AllSoil <- soilDat %>%
-  group_by(location, year) %>%
+AllSoil <- soilDat |>
+  group_by(location, year) |>
   summarize(nObs = n(),
             doyYearS = min(doy),
             doyYearE=max(doy),
@@ -1078,39 +1078,39 @@ AllSoil <- soilDat %>%
             maxTemp=max(Tsoil_6),
             aveTemp=mean(Tsoil_6)) 
  
-totObs <- AllSoil %>%
-  group_by(location) %>%
+totObs <- AllSoil |>
+  group_by(location) |>
   summarize(totObs = sum(nObs))
 
 # total sample size
-modnSoil <- soilMod %>%
-  group_by(location) %>%
+modnSoil <- soilMod |>
+  group_by(location) |>
   summarize(nObs = n())
 
 
 # freezing events
-freezeEvent <- freezeCheck %>%
-  group_by(freezeEvent, location,year)%>%
+freezeEvent <- freezeCheck |>
+  group_by(freezeEvent, location,year)|>
   summarize(minTemp =min(Tsoil_6),
             startdoy=min(doy),
             duration = n())
 
-freezePlot <- freezeEvent %>%
-  group_by(location, year) %>%
+freezePlot <- freezeEvent |>
+  group_by(location, year) |>
   summarize(nEvent = n(),
             max_duration = max(duration),
             minT = min(minTemp))
 
 # temp summary for table
 
-soilTable <- soilDat %>%
-  group_by(location, year) %>%
+soilTable <- soilDat |>
+  group_by(location, year) |>
   summarize(minT = round(min(Tsoil_6),1),
             maxT = round(max(Tsoil_6),1),
             aveT = round(mean(Tsoil_6),1))
 
-weatherTable <- weatherDay %>%
-  group_by(year) %>%
+weatherTable <- weatherDay |>
+  group_by(year) |>
   summarize(nobs =n(),
             maxT = max(aveT,na.rm=TRUE),
             minT=min(aveT,na.rm=TRUE),
@@ -1123,10 +1123,10 @@ weatherTable <- weatherDay %>%
 
 weatherDay$freezeAir <- ifelse(weatherDay$aveT<0,1,0)
 
-weatherDay <- weatherDay %>%
+weatherDay <- weatherDay |>
   arrange(year,doy)
 
-freezeCheckA <- weatherDay %>%
+freezeCheckA <- weatherDay |>
   filter(freezeAir == 1)
 # get all freeze events
 freezeEventA <- c(1)
@@ -1176,14 +1176,14 @@ freezeCheckA$freezeEvent <- freezeEventA
 freezeCheckA$freezeLastDayYear <- freezeLastDayYearA
 freezeCheckA$freezeLastDay <- freezeLastDayA
 
-freezeEventA <- freezeCheckA %>%
-  group_by(freezeEvent, year)%>%
+freezeEventA <- freezeCheckA |>
+  group_by(freezeEvent, year)|>
   summarize(minTemp =min(aveT),
             startdoy=min(doy),
             duration = n())
 
-freezePlotA <- freezeEventA %>%
-  group_by(year) %>%
+freezePlotA <- freezeEventA |>
+  group_by(year) |>
   summarize(nEvent = n(),
             max_duration = max(duration),
             minT = min(minTemp))
@@ -1202,6 +1202,8 @@ beta_air <- read.csv(paste0(modDir, "/air_slope.csv"))
 # check for significance
 beta_air$sigID <- ifelse(beta_air$X2.5.<0 & beta_air$X97.5.<0,1,
                     ifelse(beta_air$X2.5.>0 & beta_air$X97.5.>0,1,0))
+
+betaTable <- beta_air |>
 
 # for plotting: predicted mu with CI
 
@@ -1292,17 +1294,17 @@ png(paste0(plotDir,"/mod_data.png"), width = 25, height = 55, units = "cm", res=
 layout(matrix(seq(1,10),ncol=2, byrow=FALSE), width=rep(lcm(wd),2),height=rep(lcm(hd),5))
 
 # loc 1: maple beech no snow
-plotS1 <- soilMod %>% filter(locID == 1 & swID == 1 & snowID ==1)
-plotS2 <- soilMod %>% filter(locID == 1 & swID == 2 & snowID ==1)
+plotS1 <- soilMod |> filter(locID == 1 & swID == 1 & snowID ==1)
+plotS2 <- soilMod |> filter(locID == 1 & swID == 2 & snowID ==1)
 
 ### snow free/low snow # 
 # location 1 
 
 
-mfr1 <- mu_temp_freezes %>% filter(locID == 1 & swID == 1)
-mfr2 <- mu_temp_freezes %>% filter(locID == 1 & swID == 2)
-mwr1 <- mu_temp_warms %>% filter(locID == 1 & swID == 1)
-mwr2 <- mu_temp_warms %>% filter(locID == 1 & swID == 2)
+mfr1 <- mu_temp_freezes |> filter(locID == 1 & swID == 1)
+mfr2 <- mu_temp_freezes |> filter(locID == 1 & swID == 2)
+mwr1 <- mu_temp_warms |> filter(locID == 1 & swID == 1)
+mwr2 <- mu_temp_warms |> filter(locID == 1 & swID == 2)
 # gray green rgb(0.58,0.63,0.53,0.25)
 par(mai=c(0.75,0.75,0,0))
 plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
@@ -1356,13 +1358,13 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
         
         # location 2
-        plotS1 <- soilMod %>% filter(locID == 2 & swID == 1 & snowID ==1)
-        plotS2 <- soilMod %>% filter(locID == 2 & swID == 2 & snowID ==1)
+        plotS1 <- soilMod |> filter(locID == 2 & swID == 1 & snowID ==1)
+        plotS2 <- soilMod |> filter(locID == 2 & swID == 2 & snowID ==1)
         
-        mfr1 <- mu_temp_freezes %>% filter(locID == 2 & swID == 1)
-        mfr2 <- mu_temp_freezes %>% filter(locID == 2 & swID == 2)
-        mwr1 <- mu_temp_warms %>% filter(locID == 2 & swID == 1)
-        mwr2 <- mu_temp_warms %>% filter(locID == 2 & swID == 2)
+        mfr1 <- mu_temp_freezes |> filter(locID == 2 & swID == 1)
+        mfr2 <- mu_temp_freezes |> filter(locID == 2 & swID == 2)
+        mwr1 <- mu_temp_warms |> filter(locID == 2 & swID == 1)
+        mwr2 <- mu_temp_warms |> filter(locID == 2 & swID == 2)
         # gray green rgb(0.58,0.63,0.53,0.25)
         par(mai=c(0.75,0.75,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
@@ -1416,13 +1418,13 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
         
         # location 3
-        plotS1 <- soilMod %>% filter(locID == 3 & swID == 1 & snowID ==1)
-        plotS2 <- soilMod %>% filter(locID == 3 & swID == 2 & snowID ==1)
+        plotS1 <- soilMod |> filter(locID == 3 & swID == 1 & snowID ==1)
+        plotS2 <- soilMod |> filter(locID == 3 & swID == 2 & snowID ==1)
         
-        mfr1 <- mu_temp_freezes %>% filter(locID == 3 & swID == 1)
-        mfr2 <- mu_temp_freezes %>% filter(locID == 3 & swID == 2)
-        mwr1 <- mu_temp_warms %>% filter(locID == 3 & swID == 1)
-        mwr2 <- mu_temp_warms %>% filter(locID == 3 & swID == 2)
+        mfr1 <- mu_temp_freezes |> filter(locID == 3 & swID == 1)
+        mfr2 <- mu_temp_freezes |> filter(locID == 3 & swID == 2)
+        mwr1 <- mu_temp_warms |> filter(locID == 3 & swID == 1)
+        mwr2 <- mu_temp_warms |> filter(locID == 3 & swID == 2)
         # gray green rgb(0.58,0.63,0.53,0.25)
         par(mai=c(0.75,0.75,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
@@ -1477,13 +1479,13 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
         
         # location 4
-        plotS1 <- soilMod %>% filter(locID == 4 & swID == 1 & snowID ==1)
-        plotS2 <- soilMod %>% filter(locID == 4 & swID == 2 & snowID ==1)
+        plotS1 <- soilMod |> filter(locID == 4 & swID == 1 & snowID ==1)
+        plotS2 <- soilMod |> filter(locID == 4 & swID == 2 & snowID ==1)
         
-        mfr1 <- mu_temp_freezes %>% filter(locID == 4 & swID == 1)
-        mfr2 <- mu_temp_freezes %>% filter(locID == 4 & swID == 2)
-        mwr1 <- mu_temp_warms %>% filter(locID == 4 & swID == 1)
-        mwr2 <- mu_temp_warms %>% filter(locID == 4 & swID == 2)
+        mfr1 <- mu_temp_freezes |> filter(locID == 4 & swID == 1)
+        mfr2 <- mu_temp_freezes |> filter(locID == 4 & swID == 2)
+        mwr1 <- mu_temp_warms |> filter(locID == 4 & swID == 1)
+        mwr2 <- mu_temp_warms |> filter(locID == 4 & swID == 2)
         # gray green rgb(0.58,0.63,0.53,0.25)
         par(mai=c(0.75,0.75,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
@@ -1538,13 +1540,13 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
         
         # location 5
-        plotS1 <- soilMod %>% filter(locID == 5 & swID == 1 & snowID ==1)
-        plotS2 <- soilMod %>% filter(locID == 5 & swID == 2 & snowID ==1)
+        plotS1 <- soilMod |> filter(locID == 5 & swID == 1 & snowID ==1)
+        plotS2 <- soilMod |> filter(locID == 5 & swID == 2 & snowID ==1)
         
-        mfr1 <- mu_temp_freezes %>% filter(locID == 5 & swID == 1)
-        mfr2 <- mu_temp_freezes %>% filter(locID == 5 & swID == 2)
-        mwr1 <- mu_temp_warms %>% filter(locID == 5 & swID == 1)
-        mwr2 <- mu_temp_warms %>% filter(locID == 5 & swID == 2)
+        mfr1 <- mu_temp_freezes |> filter(locID == 5 & swID == 1)
+        mfr2 <- mu_temp_freezes |> filter(locID == 5 & swID == 2)
+        mwr1 <- mu_temp_warms |> filter(locID == 5 & swID == 1)
+        mwr2 <- mu_temp_warms |> filter(locID == 5 & swID == 2)
         
  
         
@@ -1603,11 +1605,11 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
         ### snow free/low snow # 
         # location 1 
-        plotS1 <- soilMod %>% filter(locID == 1 & swID == 1 & snowID ==2)
-        plotS2 <- soilMod %>% filter(locID == 1 & swID == 2 & snowID ==2)
+        plotS1 <- soilMod |> filter(locID == 1 & swID == 1 & snowID ==2)
+        plotS2 <- soilMod |> filter(locID == 1 & swID == 2 & snowID ==2)
         
-        msr1 <- mu_temp_snow %>% filter(locID == 1 & swID == 1)
-        msr2 <- mu_temp_snow %>% filter(locID == 1 & swID == 2)
+        msr1 <- mu_temp_snow |> filter(locID == 1 & swID == 1)
+        msr2 <- mu_temp_snow |> filter(locID == 1 & swID == 2)
 
         # gray green rgb(0.58,0.63,0.53,0.25)
         par(mai=c(0.75,0.75,0,0))
@@ -1650,11 +1652,11 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
         ### snow free/low snow # 
         # location 2 
-        plotS1 <- soilMod %>% filter(locID == 2 & swID == 1 & snowID ==2)
-        plotS2 <- soilMod %>% filter(locID == 2 & swID == 2 & snowID ==2)
+        plotS1 <- soilMod |> filter(locID == 2 & swID == 1 & snowID ==2)
+        plotS2 <- soilMod |> filter(locID == 2 & swID == 2 & snowID ==2)
         
-        msr1 <- mu_temp_snow %>% filter(locID == 2 & swID == 1)
-        msr2 <- mu_temp_snow %>% filter(locID == 2 & swID == 2)
+        msr1 <- mu_temp_snow |> filter(locID == 2 & swID == 1)
+        msr2 <- mu_temp_snow |> filter(locID == 2 & swID == 2)
         
         # gray green rgb(0.58,0.63,0.53,0.25)
         par(mai=c(0.75,0.75,0,0))
@@ -1696,11 +1698,11 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
         ### snow free/low snow # 
         # location 3 
-        plotS1 <- soilMod %>% filter(locID == 3 & swID == 1 & snowID ==2)
-        plotS2 <- soilMod %>% filter(locID == 3 & swID == 2 & snowID ==2)
+        plotS1 <- soilMod |> filter(locID == 3 & swID == 1 & snowID ==2)
+        plotS2 <- soilMod |> filter(locID == 3 & swID == 2 & snowID ==2)
         
-        msr1 <- mu_temp_snow %>% filter(locID == 3 & swID == 1)
-        msr2 <- mu_temp_snow %>% filter(locID == 3 & swID == 2)
+        msr1 <- mu_temp_snow |> filter(locID == 3 & swID == 1)
+        msr2 <- mu_temp_snow |> filter(locID == 3 & swID == 2)
         
       
         par(mai=c(0.75,0.75,0,0))
@@ -1739,11 +1741,11 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
         ### snow free/low snow # 
         # location 4 
-        plotS1 <- soilMod %>% filter(locID == 4 & swID == 1 & snowID ==2)
-        plotS2 <- soilMod %>% filter(locID == 4 & swID == 2 & snowID ==2)
+        plotS1 <- soilMod |> filter(locID == 4 & swID == 1 & snowID ==2)
+        plotS2 <- soilMod |> filter(locID == 4 & swID == 2 & snowID ==2)
         
-        msr1 <- mu_temp_snow %>% filter(locID == 4 & swID == 1)
-        msr2 <- mu_temp_snow %>% filter(locID == 4 & swID == 2)
+        msr1 <- mu_temp_snow |> filter(locID == 4 & swID == 1)
+        msr2 <- mu_temp_snow |> filter(locID == 4 & swID == 2)
         
         
         par(mai=c(0.75,0.75,0,0))
@@ -1780,11 +1782,11 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i
         
         ### snow free/low snow # 
         # location 5 
-        plotS1 <- soilMod %>% filter(locID == 5 & swID == 1 & snowID ==2)
-        plotS2 <- soilMod %>% filter(locID == 5 & swID == 2 & snowID ==2)
+        plotS1 <- soilMod |> filter(locID == 5 & swID == 1 & snowID ==2)
+        plotS2 <- soilMod |> filter(locID == 5 & swID == 2 & snowID ==2)
         
-        msr1 <- mu_temp_snow %>% filter(locID == 5 & swID == 1)
-        msr2 <- mu_temp_snow %>% filter(locID == 5 & swID == 2)
+        msr1 <- mu_temp_snow |> filter(locID == 5 & swID == 1)
+        msr2 <- mu_temp_snow |> filter(locID == 5 & swID == 2)
         
         par(mai=c(0.75,0.75,0,0))
         plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
@@ -1832,26 +1834,26 @@ dev.off()
 # double check guiden trap size
 litterfall25$trap_area <- ifelse(litterfall25$Trap.Type == "Kropp", 1, 0.8*0.8)
 
-litterTrap <- litterfall25 %>%
-  group_by(Date.Collected,Plot,Trap.Type) %>%
+litterTrap <- litterfall25 |>
+  group_by(Date.Collected,Plot,Trap.Type) |>
   summarize(lt_wt = sum(Weight, na.rm=TRUE))
 litterTrap$trap_area <- ifelse(litterTrap$Trap.Type == "Kropp", 1, 0.8*0.8)
 litterTrap$wt_m2 <- litterTrap$lt_wt/litterTrap$trap_area
 
 
-litterPlot <- litterTrap %>%
-  group_by(Date.Collected, Plot) %>%
+litterPlot <- litterTrap |>
+  group_by(Date.Collected, Plot) |>
   summarize(g_m2 = mean(wt_m2),
             n_tr = n())
 litterPlot$date <- mdy(litterPlot$Date.Collected)
-litterPlot <- litterPlot %>%
+litterPlot <- litterPlot |>
   filter(Plot !="RG04" & date > mdy("9/20/25"))
 
 ggplot(litterPlot, aes(date, g_m2, fill=Plot))+
   geom_col(position="dodge")
 
 # organize litter depth
-lit_depth <- l_depth25 %>%
+lit_depth <- l_depth25 |>
   pivot_longer(!c(Date,Plot,Direction), names_to="rep", values_to="cm")
 
 lit_depth$depth_conv <- ifelse(lit_depth$cm == "Trace",0.05, 
@@ -1860,13 +1862,13 @@ lit_depth$depth_conv <- ifelse(lit_depth$cm == "Trace",0.05,
 lit_depth$depth <- as.numeric(lit_depth$depth_conv)
 
 lit_depth$date <- mdy(lit_depth$Date)
-ggplot(lit_depth %>% filter(Plot !="RG04"), aes(as.factor(date),depth, fill=Plot))+
+ggplot(lit_depth |> filter(Plot !="RG04"), aes(as.factor(date),depth, fill=Plot))+
   geom_boxplot()
-depthPlot <- lit_depth %>%
-  group_by(Date, Plot) %>%
+depthPlot <- lit_depth |>
+  group_by(Date, Plot) |>
   summarize(ave_depth = mean(depth),
             sd = sd(depth),
-            n = n())%>% filter(Plot !="RG04")
+            n = n())|> filter(Plot !="RG04")
 
 depthPlot$se <- depthPlot$sd/sqrt(depthPlot$n)
 depthPlot$date <- mdy(depthPlot$Date)
@@ -1874,10 +1876,10 @@ depthPlot$date <- mdy(depthPlot$Date)
 ggplot(depthPlot, aes(date,ave_depth, color=Plot))+
   geom_point()+geom_line()
 
-depthPlot <- depthPlot %>%
+depthPlot <- depthPlot |>
   arrange(date,Plot)
 
-png(paste0(plotDir,"/depth_data.png"), width = 25, height = 15, units = "cm", res=300)
+png(paste0(plotDir,"/depth_data.png"), width = 15, height = 15, units = "cm", res=300)
 plot(c(0,1),c(0,1), type="n", xlim=c(ymd("2025-09-01"),ymd("2025-11-15")), ylim=c(-0.1,3.5), xaxs="i",yaxs="i",
      xlab= " ", ylab=" ", axes=FALSE)
 
@@ -1895,6 +1897,11 @@ for(i in 1:4){
   axis(1, c(ymd("2025-09-01"),ymd("2025-09-15"),ymd("2025-09-30"),ymd("2025-10-15"), ymd("2025-10-31"),
             "2025-11-15"), c("Sept-01", "Sept-15","Sept-30","Oct-15", "Oct-31",
                              "Nov-15"),cex.axis=1)
+  
+  mtext("Leaf litter depth (cm)", side=2, line=2.5,cex=1.5)
+  mtext("Date in 2025", side=1, line=2.5,cex=1.5)
+  legend("topleft", c("deciduous forest","mixed forest", "coniferous forest", "shrubland"), 
+         col=locColor[1:4], pch=19, lwd=1, bty="n")
 dev.off()
 
 # graphing of LAI from 2024
@@ -1904,7 +1911,7 @@ LAI24$doy <- yday(LAI24$dateF)
 
 sites <- c("RG01","RG03","RG25","RG09")
 
-canopy24 <- LAI24 %>%
+canopy24 <- LAI24 |>
   filter(site_id %in% sites )
 
 canopy24$LAI <- as.numeric(canopy24$PAR.LAI)
@@ -1931,8 +1938,8 @@ canopy24$doylabel <- ifelse(canopy24$doy <= 169, 165, # middle date
                               
                               canopy24$doy )
 
-boxL <- canopy24 %>%
-  group_by(doylabel,date_label, locID) %>%
+boxL <- canopy24 |>
+  group_by(doylabel,date_label, locID) |>
   summarise(q0 = quantile(LAI, probs=0.025,na.rm=TRUE),
             q25 = quantile(LAI, probs=0.25,na.rm=TRUE),
             q50 = quantile(LAI, probs=0.50,na.rm=TRUE),
@@ -1947,10 +1954,10 @@ boxL <- left_join(boxL, sampIDs, by="doylabel")
 
 
 
-dboxL <- boxL %>% filter(locID ==1)
-dboxL2 <- boxL %>% filter(locID ==2)
-dboxL3 <- boxL %>% filter(locID ==3)
-dboxL4 <- boxL %>% filter(locID ==4)
+dboxL <- boxL |> filter(locID ==1)
+dboxL2 <- boxL |> filter(locID ==2)
+dboxL3 <- boxL |> filter(locID ==3)
+dboxL4 <- boxL |> filter(locID ==4)
 
 
 
