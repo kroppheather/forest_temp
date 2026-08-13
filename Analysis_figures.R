@@ -1204,7 +1204,16 @@ beta_air$sigID <- ifelse(beta_air$X2.5.<0 & beta_air$X97.5.<0,1,
                     ifelse(beta_air$X2.5.>0 & beta_air$X97.5.>0,1,0))
 
 betaTable <- beta_air |>
+  select(X,mean,X2.5.,X97.5.,forestID,swID,regID,sigID) %>%
+  arrange(regID,swID,forestID)
 
+betaTable$all <- paste(round(betaTable$mean,2), "[",round(betaTable$X2.5.,2),",",round(betaTable$X97.5.,2),"]")
+# write.csv(betaTable,paste0(plotDir,"/beta_out.csv"),row.names=FALSE)
+betaN <- beta_n |>
+  select(X,mean,X2.5.,X97.5.,locID,swID,snowID) %>%
+  arrange(snowID,swID,locID)
+betaN$all <- paste0(round(betaN$mean,1), " [",round(betaN$X2.5.,1),",",round(betaN$X97.5.,1),"]")
+#write.csv(betaN,paste0(plotDir,"/beta_n_out.csv"),row.names=FALSE)
 # for plotting: predicted mu with CI
 
 plotFreeze <- data.frame(temp_freeze = seq(-20,0, length.out=41))
