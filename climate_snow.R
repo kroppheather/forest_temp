@@ -73,7 +73,7 @@ ggplot(snow_annual, aes(year, tot_precip/1000))+
   geom_point()
 
 ######## syracuse climatology -----
-syr <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/climate/SYR/4049536.csv")
+syr <- read.csv("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/forest_soil/climate/SYR/4376044.csv")
 
 
 syr$date <- ymd(syr$DATE)
@@ -81,13 +81,18 @@ syr$year <- year(syr$date)
 syr$month <- month(syr$date)
 syr$doy <- yday(syr$date)
 
+syr$wy_year <- ifelse(leap_year(syr$year)==TRUE & syr$doy>= 275,syr$year+1,
+                          ifelse(leap_year(syr$year)==FALSE & syr$doy>= 274,syr$year+1,syr$year))
+
 syr_snow_annual <- syr %>%
-  group_by(year) %>%
+  group_by(wy_year) %>%
   summarize(max_depth =max(SNWD, na.rm=TRUE),
             tot_acc = sum(SNOW, na.rm=TRUE),
             tot_precip = sum(PRCP,na.rm=TRUE),
-            n_obs = n())%>%
-  filter(year>1940)
+            n_obs = n()) %>% filter(wy_year > 1940)
+
+quantile(syr_snow_annual$tot_acc, probs=c(0,0.25,0.5,0.75,1))
+
 syr$air_ave <- (syr$TMAX+syr$TMIN)/2
 ggplot(syr_snow_annual, aes(year, max_depth/1000))+
   geom_point()
