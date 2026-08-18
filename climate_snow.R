@@ -120,7 +120,36 @@ syr_air_annual <- syr %>%
   filter(nobsT > 360)
 syr_air_annual$yr_cnt <- syr_air_annual$year-1940
 
+# cold season vs warm season (break up by water year)
 
+syr_air_cold<- syr %>%
+  filter(month>=10 | month <=4) %>%
+  group_by(wy_year) %>%
+  summarize(tave = mean(air_ave, na.rm=TRUE),
+            tmax=max(TMAX, na.rm=TRUE),
+            tmin=min(TMIN, na.rm=TRUE),
+            nobsT=length(na.omit(air_ave)),
+            freezeD = sum(freezeDays, na.rm=TRUE),
+            aTDD= TDD(air_ave),
+            aFDD=FDD(air_ave))%>%filter(wy_year>1940)
+
+ggplot(syr_air_cold, aes(x=wy_year, y=tave))+
+  geom_point()
+
+
+syr_air_warm<- syr %>%
+  filter(month<10 & month >=5) %>%
+  group_by(wy_year) %>%
+  summarize(tave = mean(air_ave, na.rm=TRUE),
+            tmax=max(TMAX, na.rm=TRUE),
+            tmin=min(TMIN, na.rm=TRUE),
+            nobsT=length(na.omit(air_ave)),
+            freezeD = sum(freezeDays, na.rm=TRUE),
+            aTDD= TDD(air_ave),
+            aFDD=FDD(air_ave))%>%filter(wy_year<2026)
+
+ggplot(syr_air_warm, aes(x=wy_year, y=tave))+
+  geom_point()
 
 syr_air_month <- syr %>%
   group_by(year, month) %>%
